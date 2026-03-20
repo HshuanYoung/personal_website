@@ -1,0 +1,203 @@
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Home, 
+  FileText, 
+  Wrench, 
+  Palette, 
+  Mic, 
+  MessageSquare, 
+  Languages, 
+  Mail, 
+  Github, 
+  Linkedin, 
+  MessageCircle, 
+  Menu,
+  ChevronRight
+} from 'lucide-react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { translations, type Language } from './types';
+import HomePage from './pages/Home';
+import ResumePage from './pages/Resume';
+import ToolsPage from './pages/Tools';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export default function App() {
+  const [lang, setLang] = useState<Language>('en');
+  const [currentPage, setCurrentPage] = useState<'home' | 'resume' | 'tools'>('home');
+  const [subPage, setSubPage] = useState<'color' | 'tts' | 'ai' | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const sidebarTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const t = translations[lang];
+
+  const handleSidebarHover = (isHovering: boolean) => {
+    if (isHovering) {
+      if (sidebarTimer.current) clearTimeout(sidebarTimer.current);
+      setIsSidebarOpen(true);
+    } else {
+      sidebarTimer.current = setTimeout(() => {
+        setIsSidebarOpen(false);
+      }, 5000);
+    }
+  };
+
+  const toggleLang = () => setLang(prev => prev === 'en' ? 'zh' : 'en');
+
+  return (
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
+      {/* Top Bar */}
+      <div className="fixed top-0 right-0 p-6 flex items-center gap-4 z-50">
+        <button 
+          onClick={toggleLang}
+          className="p-2 rounded-full hover:bg-white/80 transition-colors shadow-sm border border-black/5"
+          title="Switch Language"
+        >
+          <Languages size={20} />
+        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setShowContact(!showContact)}
+            className="p-2 rounded-full hover:bg-white/80 transition-colors shadow-sm border border-black/5"
+            title={t.contactMe}
+          >
+            <Mail size={20} />
+          </button>
+          <AnimatePresence>
+            {showContact && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
+              >
+                <a href="https://github.com/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                  <Github size={18} /> <span>GitHub</span>
+                </a>
+                <div className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer">
+                  <MessageCircle size={18} /> <span>WeChat</span>
+                </div>
+                <a href="https://linkedin.com/in/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                  <Linkedin size={18} /> <span>LinkedIn</span>
+                </a>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Sidebar Icon (Top Left) */}
+      <div className="fixed top-0 left-0 p-6 z-50">
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="p-2 rounded-full hover:bg-white/80 transition-colors shadow-sm border border-black/5"
+        >
+          <Menu size={20} />
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <motion.nav 
+        onMouseEnter={() => handleSidebarHover(true)}
+        onMouseLeave={() => handleSidebarHover(false)}
+        initial={false}
+        animate={{ x: isSidebarOpen ? 0 : -280 }}
+        transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+        className="fixed top-0 left-0 h-full w-72 bg-white/80 backdrop-blur-xl border-r border-black/5 z-40 p-8 flex flex-col gap-8 shadow-2xl"
+      >
+        <div className="mt-12">
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">hsyoung.icu</h1>
+          <p className="text-xs text-neutral-500 font-mono mt-1 uppercase tracking-widest">Personal Space</p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <SidebarItem 
+            icon={<Home size={20} />} 
+            label={t.home} 
+            active={currentPage === 'home'} 
+            onClick={() => { setCurrentPage('home'); setSubPage(null); }} 
+          />
+          <SidebarItem 
+            icon={<FileText size={20} />} 
+            label={t.resume} 
+            active={currentPage === 'resume'} 
+            onClick={() => { setCurrentPage('resume'); setSubPage(null); }} 
+          />
+          <div className="flex flex-col gap-1">
+            <SidebarItem 
+              icon={<Wrench size={20} />} 
+              label={t.tools} 
+              active={currentPage === 'tools'} 
+              onClick={() => setCurrentPage('tools')} 
+            />
+            <AnimatePresence>
+              {currentPage === 'tools' && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="ml-6 flex flex-col gap-1 overflow-hidden"
+                >
+                  <SubItem label={t.color} active={subPage === 'color'} onClick={() => setSubPage('color')} />
+                  <SubItem label={t.tts} active={subPage === 'tts'} onClick={() => setSubPage('tts')} />
+                  <SubItem label={t.aiChat} active={subPage === 'ai'} onClick={() => setSubPage('ai')} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <div className="mt-auto text-[10px] text-neutral-400 font-mono uppercase tracking-widest">
+          © 2026 hsyoung.icu
+        </div>
+      </motion.nav>
+
+      {/* Main Content */}
+      <main className={cn(
+        "transition-all duration-500 min-h-screen pt-24 px-8 pb-12",
+        isSidebarOpen ? "pl-80" : "pl-8"
+      )}>
+        <AnimatePresence mode="wait">
+          {currentPage === 'home' && <HomePage key="home" lang={lang} />}
+          {currentPage === 'resume' && <ResumePage key="resume" lang={lang} />}
+          {currentPage === 'tools' && <ToolsPage key="tools" lang={lang} subPage={subPage} />}
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+}
+
+function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-4 p-3 rounded-2xl transition-all w-full text-left group",
+        active ? "bg-neutral-900 text-white shadow-lg" : "hover:bg-neutral-100 text-neutral-600"
+      )}
+    >
+      <span className={cn("transition-transform group-hover:scale-110", active ? "text-emerald-400" : "text-neutral-400")}>{icon}</span>
+      <span className="font-medium">{label}</span>
+      {active && <motion.div layoutId="active-pill" className="ml-auto"><ChevronRight size={16} /></motion.div>}
+    </button>
+  );
+}
+
+function SubItem({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "p-2 rounded-xl text-sm transition-all text-left w-full",
+        active ? "text-neutral-900 font-semibold bg-neutral-100" : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
