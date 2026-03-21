@@ -13,7 +13,10 @@ export default function Home({ lang }: { lang: Language }) {
   useEffect(() => {
     fetch('/api/merit-stats')
       .then(res => res.json())
-      .then(data => setTotalMerit(data.total))
+      .then(data => {
+        setTotalMerit(data.total);
+        setMeritCount(data.dailyCount || 0);
+      })
       .catch(err => console.error('Failed to fetch merit stats:', err));
   }, []);
 
@@ -23,13 +26,6 @@ export default function Home({ lang }: { lang: Language }) {
         method: 'POST',
       });
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Expected JSON but got:', text.substring(0, 100));
-        throw new Error('Server returned non-JSON response');
-      }
-
       const data = await response.json();
 
       if (!response.ok) {
@@ -38,10 +34,10 @@ export default function Home({ lang }: { lang: Language }) {
         return;
       }
 
-      setMeritCount(prev => prev + 1);
+      setMeritCount(data.dailyCount);
       setTotalMerit(data.total);
       setShowPlusOne(true);
-      setTimeout(() => setShowPlusOne(false), 1000);
+      setTimeout(() => setShowPlusOne(false), 5000);
     } catch (err) {
       console.error(err);
     }
@@ -69,16 +65,24 @@ export default function Home({ lang }: { lang: Language }) {
           className="w-64 h-64 bg-neutral-900 rounded-full flex items-center justify-center shadow-2xl border-8 border-neutral-800 relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-          <span className="text-8xl select-none">🐟</span>
+          <img 
+            src="/assets/woodenfish.png" 
+            alt="Wooden Fish" 
+            className="w-40 h-40 object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://picsum.photos/seed/fish/200/200";
+            }}
+          />
         </motion.button>
 
         <AnimatePresence>
           {showPlusOne && (
             <motion.div
-              initial={{ opacity: 0, y: 0 }}
-              animate={{ opacity: 1, y: -100 }}
+              initial={{ opacity: 0, y: 0, scale: 1 }}
+              animate={{ opacity: 1, y: -120, scale: 2.5 }}
               exit={{ opacity: 0 }}
-              className="absolute top-0 left-1/2 -translate-x-1/2 text-emerald-500 font-bold text-2xl pointer-events-none"
+              transition={{ duration: 0.5 }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 text-emerald-500 font-bold pointer-events-none z-20"
             >
               {t.merit}
             </motion.div>
@@ -102,9 +106,9 @@ export default function Home({ lang }: { lang: Language }) {
       <div className="flex flex-col items-center gap-6">
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">Daily Merit Status</span>
-          <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className={cn("w-2 h-2 rounded-full", i < meritCount ? "bg-emerald-500" : "bg-neutral-200")} />
+          <div className="flex gap-1.5">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className={cn("w-2.5 h-2.5 rounded-full transition-colors duration-300", i < meritCount ? "bg-emerald-500" : "bg-neutral-200")} />
             ))}
           </div>
         </div>

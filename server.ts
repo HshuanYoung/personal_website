@@ -46,6 +46,7 @@ async function getDbPool() {
         CREATE TABLE IF NOT EXISTS merit_clicks (
           ip VARCHAR(45),
           click_date DATE,
+          click_count INT DEFAULT 0,
           PRIMARY KEY (ip, click_date)
         )
       `);
@@ -80,7 +81,7 @@ async function getDbPool() {
 // In-memory fallback for preview
 const memoryStats = {
   meritTotal: 0,
-  meritClicks: new Set<string>(),
+  meritClicksCounts: {} as Record<string, number>,
   downloadIpCounts: {} as Record<string, number>,
   downloadTotal: 0,
   lastResetMonth: new Date().getMonth()
@@ -108,15 +109,25 @@ async function startServer() {
   // API: Merit Stats
   app.get('/api/merit-stats', async (req, res) => {
     const db = await getDbPool();
+    const ip = req.ip || 'unknown';
+    const today = new Date().toISOString().split('T')[0];
+    let dailyCount = 0;
+
     if (db) {
       try {
         const [rows]: any = await db.query('SELECT total_points FROM merit_stats WHERE id = 1');
-        return res.json({ total: rows[0]?.total_points || 0 });
+        const [daily]: any = await db.query('SELECT click_count FROM merit_clicks WHERE ip = ? AND click_date = ?', [ip, today]);
+        dailyCount = daily[0]?.click_count || 0;
+        return res.json({ total: rows[0]?.total_points || 0, dailyCount });
       } catch (err) {
         console.error(err);
       }
     }
-    res.json({ total: memoryStats.meritTotal });
+    
+    // Fallback
+    const key = `${ip}_${today}`;
+    dailyCount = memoryStats.meritClicksCounts[key] || 0;
+    res.json({ total: memoryStats.meritTotal, dailyCount });
   });
 
   // API: Merit Click
@@ -128,19 +139,26 @@ async function startServer() {
     if (db) {
       try {
         const [existing]: any = await db.query(
-          'SELECT 1 FROM merit_clicks WHERE ip = ? AND click_date = ?',
+          'SELECT click_count FROM merit_clicks WHERE ip = ? AND click_date = ?',
           [ip, today]
         );
 
-        if (existing.length > 0) {
+        const currentCount = existing[0]?.click_count || 0;
+
+        if (currentCount >= 10) {
           return res.status(403).json({ error: 'Merit is full, come back tomorrow' });
         }
 
-        await db.query('INSERT INTO merit_clicks (ip, click_date) VALUES (?, ?)', [ip, today]);
+        if (existing.length > 0) {
+          await db.query('UPDATE merit_clicks SET click_count = click_count + 1 WHERE ip = ? AND click_date = ?', [ip, today]);
+        } else {
+          await db.query('INSERT INTO merit_clicks (ip, click_date, click_count) VALUES (?, ?, 1)', [ip, today]);
+        }
+        
         await db.query('UPDATE merit_stats SET total_points = total_points + 1 WHERE id = 1');
         
         const [rows]: any = await db.query('SELECT total_points FROM merit_stats WHERE id = 1');
-        return res.json({ success: true, message: 'Merit +1', total: rows[0].total_points });
+        return res.json({ success: true, message: 'Merit +1', total: rows[0].total_points, dailyCount: currentCount + 1 });
       } catch (err) {
         console.error(err);
         return res.status(500).json({ error: 'Database error' });
@@ -149,12 +167,13 @@ async function startServer() {
 
     // Fallback
     const key = `${ip}_${today}`;
-    if (memoryStats.meritClicks.has(key)) {
+    const currentCount = memoryStats.meritClicksCounts[key] || 0;
+    if (currentCount >= 10) {
       return res.status(403).json({ error: 'Merit is full, come back tomorrow' });
     }
-    memoryStats.meritClicks.add(key);
+    memoryStats.meritClicksCounts[key] = currentCount + 1;
     memoryStats.meritTotal += 1;
-    res.json({ success: true, message: 'Merit +1', total: memoryStats.meritTotal });
+    res.json({ success: true, message: 'Merit +1', total: memoryStats.meritTotal, dailyCount: currentCount + 1 });
   });
 
   // API: Resume Download
