@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { translations, type Language } from '../types';
 import { cn } from '../lib/utils';
@@ -10,6 +10,9 @@ export default function Home({ lang }: { lang: Language }) {
   const [error, setError] = useState<string | null>(null);
   const t = translations[lang];
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isHitting, setIsHitting] = useState(false);
+
   useEffect(() => {
     fetch('/api/merit-stats')
       .then(res => res.json())
@@ -18,9 +21,25 @@ export default function Home({ lang }: { lang: Language }) {
         setMeritCount(data.dailyCount || 0);
       })
       .catch(err => console.error('Failed to fetch merit stats:', err));
+    
+    // Preload "muyu" sound
+    audioRef.current = new Audio('https://www.myinstants.com/media/sounds/muyu.mp3');
+    audioRef.current.load();
   }, []);
 
   const handleFishClick = async () => {
+    if (isHitting) return;
+
+    // Play "muyu" sound
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => console.log('Audio play blocked:', e));
+    }
+
+    // Trigger animation
+    setIsHitting(true);
+    setTimeout(() => setIsHitting(false), 200);
+
     try {
       const response = await fetch('/api/click-fish', {
         method: 'POST',
@@ -53,36 +72,88 @@ export default function Home({ lang }: { lang: Language }) {
       <div className="text-center">
         <h2 className="text-5xl font-bold tracking-tight mb-4">hsyoung.icu</h2>
         <p className="text-neutral-500 max-w-md mx-auto">
-          Welcome to my personal space. Tap the wooden fish to accumulate merit for the day.
+          Welcome to my personal page.Try click it!
         </p>
       </div>
 
-      <div className="relative group">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleFishClick}
-          className="w-64 h-64 bg-neutral-900 rounded-full flex items-center justify-center shadow-2xl border-8 border-neutral-800 relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-          <img 
-            src="/assets/woodenfish.png" 
-            alt="Wooden Fish" 
-            className="w-40 h-40 object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://picsum.photos/seed/fish/200/200";
-            }}
-          />
-        </motion.button>
+      <div className="relative group cursor-pointer" onClick={handleFishClick}>
+        <div className="w-80 h-80 bg-[#121212] rounded-[4rem] flex items-center justify-center relative shadow-2xl border border-white/5 overflow-hidden">
+          <svg viewBox="0 0 200 200" className="w-full h-full p-6">
+            {/* Wooden Fish Body */}
+            <motion.g
+              animate={isHitting ? { 
+                scale: [1, 0.96, 1], 
+                y: [0, 4, 0],
+                filter: ["brightness(1)", "brightness(1.3)", "brightness(1)"]
+              } : {}}
+              transition={{ duration: 0.15 }}
+            >
+              {/* Main Body Shape - Positioned lower to avoid top clipping */}
+              <path 
+                d="M35 155 
+                   C25 145 25 125 35 115 
+                   C45 105 55 75 110 75 
+                   C165 75 175 110 175 135 
+                   C175 160 165 175 110 175 
+                   C85 175 65 185 35 155 Z" 
+                fill="white" 
+              />
+              
+              {/* Subtle shading */}
+              <path 
+                d="M35 155 C25 145 25 125 35 115" 
+                fill="#e5e5e5" 
+                opacity="0.3"
+              />
+
+              {/* The "Mouth" Cutout */}
+              <g fill="#121212">
+                <circle cx="135" cy="135" r="20" />
+                <rect x="135" y="131" width="45" height="8" />
+              </g>
+            </motion.g>
+
+            {/* The Mallet (Stick) */}
+            {/* Idle: Higher up, clear distance */}
+            {/* Click: Descends to just touch the top of the fish without overlapping */}
+            <motion.g
+              initial={{ rotate: -20, y: -15, x: -5 }}
+              animate={isHitting ? { 
+                rotate: [ -20, 5, -20 ],
+                y: [ -15, 18, -15 ],
+                x: [ -5, 0, -5 ]
+              } : { rotate: -20, y: -15, x: -5 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              style={{ originX: "100px", originY: "30px" }}
+            >
+              {/* Mallet Handle */}
+              <rect x="45" y="35" width="100" height="12" rx="6" fill="white" />
+              {/* Mallet Head */}
+              <circle cx="145" cy="41" r="22" fill="white" />
+            </motion.g>
+          </svg>
+
+          {/* Hit ripple effect */}
+          <AnimatePresence>
+            {isHitting && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 0.15, scale: 1.6 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-white rounded-full blur-3xl pointer-events-none"
+              />
+            )}
+          </AnimatePresence>
+        </div>
 
         <AnimatePresence>
           {showPlusOne && (
             <motion.div
-              initial={{ opacity: 0, y: 0, scale: 1 }}
-              animate={{ opacity: 1, y: -120, scale: 2.5 }}
+              initial={{ opacity: 0, y: -40, scale: 1 }}
+              animate={{ opacity: 1, y: -180, scale: 2.5 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute top-0 left-1/2 -translate-x-1/2 text-emerald-500 font-bold pointer-events-none z-20"
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 text-emerald-500 font-bold pointer-events-none z-20 drop-shadow-lg"
             >
               {t.merit}
             </motion.div>
@@ -95,7 +166,7 @@ export default function Home({ lang }: { lang: Language }) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="absolute -bottom-16 left-1/2 -translate-x-1/2 bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-medium border border-red-100 whitespace-nowrap"
+              className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-red-50 text-red-600 px-4 py-2 rounded-full text-sm font-medium border border-red-100 whitespace-nowrap shadow-sm"
             >
               {error}
             </motion.div>
@@ -104,20 +175,33 @@ export default function Home({ lang }: { lang: Language }) {
       </div>
 
       <div className="flex flex-col items-center gap-6">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">Daily Merit Status</span>
-          <div className="flex gap-1.5">
+        <div className="flex flex-col items-center gap-3">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Daily Merit Progress</span>
+          <div className="flex gap-2">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className={cn("w-2.5 h-2.5 rounded-full transition-colors duration-300", i < meritCount ? "bg-emerald-500" : "bg-neutral-200")} />
+              <motion.div 
+                key={i} 
+                initial={false}
+                animate={{ 
+                  backgroundColor: i < meritCount ? "#10b981" : "#e5e5e5",
+                  scale: i < meritCount ? [1, 1.2, 1] : 1
+                }}
+                className="w-3 h-3 rounded-full shadow-inner" 
+              />
             ))}
           </div>
         </div>
 
         {totalMerit !== null && (
-          <div className="bg-neutral-50 px-6 py-3 rounded-2xl border border-neutral-100 flex flex-col items-center">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-1">Global Merit</span>
-            <span className="text-2xl font-mono font-bold text-neutral-900">{totalMerit.toLocaleString()}</span>
-          </div>
+          <motion.div 
+            layout
+            className="bg-neutral-900 px-8 py-4 rounded-3xl shadow-xl flex flex-col items-center border border-white/10"
+          >
+            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-500 mb-1">Global Merit Accumulation</span>
+            <span className="text-3xl font-mono font-bold text-white tabular-nums">
+              {totalMerit.toLocaleString()}
+            </span>
+          </motion.div>
         )}
       </div>
     </motion.div>
