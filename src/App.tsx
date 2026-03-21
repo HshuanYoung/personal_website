@@ -15,16 +15,11 @@ import {
   Menu,
   ChevronRight
 } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { translations, type Language } from './types';
+import { cn } from './lib/utils';
 import HomePage from './pages/Home';
 import ResumePage from './pages/Resume';
 import ToolsPage from './pages/Tools';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export default function App() {
   const [lang, setLang] = useState<Language>('en');

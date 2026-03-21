@@ -4,6 +4,7 @@ import { Palette, Mic, MessageSquare, Send, Copy, Check, Play, Square } from 'lu
 import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import { translations, type Language } from '../types';
+import { cn } from '../lib/utils';
 
 export default function Tools({ lang, subPage }: { lang: Language, subPage: 'color' | 'tts' | 'ai' | null }) {
   const t = translations[lang];
@@ -238,6 +239,4 @@ function Wrench(props: any) {
   );
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
-}
+

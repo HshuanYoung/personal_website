@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { translations, type Language } from '../types';
+import { cn } from '../lib/utils';
 
 export default function Home({ lang }: { lang: Language }) {
   const [meritCount, setMeritCount] = useState(0);
@@ -119,6 +120,4 @@ export default function Home({ lang }: { lang: Language }) {
   );
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
-}
+
