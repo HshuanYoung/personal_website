@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, FileText, CheckCircle2, AlertCircle, X, Shield, User, Briefcase, Building2 } from 'lucide-react';
 import { translations, type Language } from '../types';
+import { resumeData } from '../../public/resume/resume_describe';
 
 export default function Resume({ lang }: { lang: Language }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,64 +82,88 @@ export default function Resume({ lang }: { lang: Language }) {
       {/* Resume Preview Area */}
       <div className="relative bg-white rounded-[2.5rem] shadow-2xl border border-black/5 overflow-hidden min-h-[800px] flex flex-col">
         {/* Redacted Overlay for Personal Info */}
-        <div className="p-12 md:p-20 flex flex-col gap-16">
-          {/* Header Redaction */}
-          <div className="flex flex-col gap-6">
-            <div className="h-12 w-64 bg-neutral-100 rounded-lg animate-pulse" />
-            <div className="flex flex-wrap gap-4">
-              <div className="h-6 w-32 bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-400" />
-                <span className="text-[10px] font-mono text-neutral-400">REDACTED</span>
-              </div>
-              <div className="h-6 w-40 bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-400" />
-                <span className="text-[10px] font-mono text-neutral-400">HIDDEN INFO</span>
-              </div>
-              <div className="h-6 w-24 bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-400" />
-                <span className="text-[10px] font-mono text-neutral-400">PRIVATE</span>
+        <div className="p-8 md:p-16 flex flex-col gap-12">
+          {/* Header Redaction (Basic Info) */}
+          <div className="flex flex-col md:flex-row gap-8 items-start border-b border-neutral-100 pb-8">
+            <div className="w-32 h-40 bg-neutral-100 rounded-xl border border-neutral-200 flex items-center justify-center relative overflow-hidden shrink-0">
+               <div className="absolute inset-0 bg-neutral-200 animate-pulse opacity-50" />
+               <User size={48} className="text-neutral-300 relative z-10" />
+            </div>
+            <div className="flex flex-col gap-4 flex-1 w-full">
+              <div className="h-10 w-48 bg-neutral-100 rounded-lg animate-pulse" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div className="h-8 w-full bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <span className="text-[10px] font-mono text-neutral-400">REDACTED: PHONE</span>
+                </div>
+                <div className="h-8 w-full bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <span className="text-[10px] font-mono text-neutral-400">REDACTED: EMAIL</span>
+                </div>
+                <div className="h-8 w-full bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <span className="text-[10px] font-mono text-neutral-400">REDACTED: BIRTH DATE</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Summary Section */}
-          <div className="flex flex-col gap-6">
-            <h3 className="text-xl font-bold border-l-4 border-emerald-500 pl-4">Professional Summary</h3>
-            <div className="flex flex-col gap-3">
-              <div className="h-4 w-full bg-neutral-50 rounded" />
-              <div className="h-4 w-[95%] bg-neutral-50 rounded" />
-              <div className="h-4 w-[98%] bg-neutral-50 rounded" />
-              <div className="h-4 w-[60%] bg-neutral-50 rounded" />
+          <div className="flex flex-col gap-4">
+            <h3 className="text-lg font-bold border-l-4 border-emerald-500 pl-4">自我评价 (Self Evaluation)</h3>
+            <p className="text-neutral-600 text-sm leading-relaxed pl-5">
+              {resumeData.summary}
+            </p>
+          </div>
+
+          {/* Education Section (Redacted) */}
+          <div className="flex flex-col gap-4">
+            <h3 className="text-lg font-bold border-l-4 border-emerald-500 pl-4">教育背景 (Education)</h3>
+            <div className="flex flex-col gap-3 pl-5 border-l border-neutral-100 ml-1">
+              <div className="h-6 w-full max-w-md bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="text-[10px] font-mono text-neutral-400">REDACTED: UNIVERSITY & MAJOR</span>
+              </div>
+              <div className="h-6 w-full max-w-sm bg-neutral-50 rounded-md border border-black/5 flex items-center px-3 gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="text-[10px] font-mono text-neutral-400">REDACTED: COURSES</span>
+              </div>
             </div>
           </div>
 
           {/* Experience Section */}
-          <div className="flex flex-col gap-10">
-            <h3 className="text-xl font-bold border-l-4 border-emerald-500 pl-4">Work Experience</h3>
+          <div className="flex flex-col gap-6">
+            <h3 className="text-lg font-bold border-l-4 border-emerald-500 pl-4">工作经历 (Work Experience)</h3>
             
-            {[1, 2].map((i) => (
-              <div key={i} className="flex flex-col gap-4 pl-4 border-l border-neutral-100">
-                <div className="flex justify-between items-start">
-                  <div className="h-6 w-48 bg-neutral-100 rounded" />
-                  <div className="h-4 w-32 bg-neutral-50 rounded" />
+            {resumeData.experience.map((exp, index) => (
+              <div key={index} className={`flex flex-col gap-2 pl-5 border-l border-neutral-100 ml-1 ${index > 0 ? 'mt-4' : ''}`}>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start font-bold text-neutral-800 gap-1">
+                  <span>{exp.company} <span className="text-neutral-400 font-normal mx-2">|</span> {exp.role}</span>
+                  <span className="text-xs text-neutral-500 font-mono bg-neutral-100 px-2 py-1 rounded">{exp.period}</span>
                 </div>
-                <div className="h-4 w-32 bg-neutral-50 rounded mb-2" />
-                <div className="flex flex-col gap-2">
-                  <div className="h-3 w-full bg-neutral-50/50 rounded" />
-                  <div className="h-3 w-[90%] bg-neutral-50/50 rounded" />
-                  <div className="h-3 w-[95%] bg-neutral-50/50 rounded" />
-                </div>
+                <ul className="list-disc list-outside ml-4 text-sm text-neutral-600 flex flex-col gap-1.5 mt-2">
+                  {exp.achievements.map((achievement, i) => (
+                    <li key={i}>{achievement}</li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
 
-          {/* Education Section */}
-          <div className="flex flex-col gap-6">
-            <h3 className="text-xl font-bold border-l-4 border-emerald-500 pl-4">Education</h3>
-            <div className="flex flex-col gap-4 pl-4 border-l border-neutral-100">
-              <div className="h-6 w-64 bg-neutral-100 rounded" />
-              <div className="h-4 w-48 bg-neutral-50 rounded" />
-            </div>
+          {/* Projects Section */}
+          <div className="flex flex-col gap-6 pb-32">
+            <h3 className="text-lg font-bold border-l-4 border-emerald-500 pl-4">主要项目 (Main Projects)</h3>
+            
+            {resumeData.projects.map((project, index) => (
+              <div key={index} className={`flex flex-col gap-2 pl-5 border-l border-neutral-100 ml-1 ${index > 0 ? 'mt-4' : ''}`}>
+                <div className="font-bold text-neutral-800">{project.name}</div>
+                <ul className="list-disc list-outside ml-4 text-sm text-neutral-600 flex flex-col gap-1.5 mt-1">
+                  {project.details.map((detail, i) => (
+                    <li key={i}>{detail}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 
