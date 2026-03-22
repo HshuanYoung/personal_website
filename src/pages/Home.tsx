@@ -149,10 +149,10 @@ export default function Home({ lang }: { lang: Language }) {
         <AnimatePresence>
           {showPlusOne && (
             <motion.div
-              initial={{ opacity: 0, y: -40, scale: 1 }}
-              animate={{ opacity: 1, y: -180, scale: 2.5 }}
+              initial={{ opacity: 0, y: 0, scale: 0.8 }}
+              animate={{ opacity: 1, y: -40, scale: 1.5 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
               className="absolute top-0 left-1/2 -translate-x-1/2 text-emerald-500 font-bold pointer-events-none z-20 drop-shadow-lg"
             >
               {t.merit}
@@ -195,12 +195,44 @@ export default function Home({ lang }: { lang: Language }) {
         {totalMerit !== null && (
           <motion.div 
             layout
-            className="bg-neutral-900 px-8 py-4 rounded-3xl shadow-xl flex flex-col items-center border border-white/10"
+            key="merit-card"
+            animate={totalMerit ? { 
+              scale: [1, 1.05, 1],
+            } : {}}
+            transition={{ duration: 0.3, ease: "backOut" }}
+            className="group relative px-8 py-3 rounded-full shadow-2xl flex items-center justify-center border border-white/20 overflow-hidden"
+            style={{
+              background: "linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff)",
+              backgroundSize: "200% 200%",
+              animation: "rainbow 5s ease infinite"
+            }}
           >
-            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-neutral-500 mb-1">Global Merit Accumulation</span>
-            <span className="text-3xl font-mono font-bold text-white tabular-nums">
-              {totalMerit.toLocaleString()}
-            </span>
+            <style>
+              {`
+                @keyframes rainbow {
+                  0% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                  100% { background-position: 0% 50%; }
+                }
+              `}
+            </style>
+            <div className="relative z-10 flex items-center gap-2 text-white font-bold whitespace-nowrap">
+              <span className="text-xs uppercase tracking-widest opacity-90">total count:</span>
+              <AnimatePresence mode="popLayout">
+                <motion.span 
+                  key={totalMerit}
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -10, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="text-xl font-mono tabular-nums drop-shadow-md"
+                >
+                  {totalMerit.toLocaleString()}
+                </motion.span>
+              </AnimatePresence>
+              <span className="text-xs uppercase tracking-widest opacity-90">pts</span>
+            </div>
+            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
           </motion.div>
         )}
       </div>

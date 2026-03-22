@@ -4,9 +4,32 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Email Transporter - Lazy initialization
+let transporter: nodemailer.Transporter | null = null;
+
+function getTransporter() {
+  if (!transporter) {
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = parseInt(process.env.SMTP_PORT || '587');
+
+    if (user && pass) {
+      transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass }
+      });
+    }
+  }
+  return transporter;
+}
 
 // MariaDB Pool - Lazy initialization
 let pool: mysql.Pool | null = null;
@@ -181,12 +204,15 @@ async function startServer() {
     const { name, position, company } = req.body;
     const ip = req.ip || 'unknown';
     const monthYear = new Date().toISOString().substring(0, 7); // YYYY-MM
+    const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
 
     if (!name || !position || !company) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const db = await getDbPool();
+    let canDownload = false;
+
     if (db) {
       try {
         // Check global limit
@@ -206,43 +232,72 @@ async function startServer() {
         // Update stats
         await db.query('INSERT INTO download_stats (ip, month_year, count) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE count = count + 1', [ip, monthYear]);
         await db.query('INSERT INTO global_download_stats (month_year, total_count) VALUES (?, 1) ON DUPLICATE KEY UPDATE total_count = total_count + 1', [monthYear]);
-
-        console.log(`[EMAIL NOTIFICATION] To: masteryoung045@gmail.com`);
-        console.log(`Subject: Resume Downloaded by ${name}`);
-        console.log(`Body: ${name} (${position} at ${company}) has downloaded the resume. IP: ${ip}`);
-
-        return res.json({ success: true, message: 'Download started' });
+        canDownload = true;
       } catch (err) {
         console.error(err);
         return res.status(500).json({ error: 'Database error' });
       }
+    } else {
+      // Fallback
+      const currentMonth = new Date().getMonth();
+      if (memoryStats.lastResetMonth !== currentMonth) {
+        memoryStats.downloadIpCounts = {};
+        memoryStats.downloadTotal = 0;
+        memoryStats.lastResetMonth = currentMonth;
+      }
+
+      if (memoryStats.downloadTotal >= 200) {
+        return res.status(403).json({ error: 'Monthly total download limit reached' });
+      }
+
+      const count = memoryStats.downloadIpCounts[ip] || 0;
+      if (count >= 2) {
+        return res.status(403).json({ error: 'You have reached your monthly download limit (2)' });
+      }
+
+      memoryStats.downloadTotal++;
+      memoryStats.downloadIpCounts[ip] = count + 1;
+      canDownload = true;
     }
 
-    // Fallback
-    const currentMonth = new Date().getMonth();
-    if (memoryStats.lastResetMonth !== currentMonth) {
-      memoryStats.downloadIpCounts = {};
-      memoryStats.downloadTotal = 0;
-      memoryStats.lastResetMonth = currentMonth;
+    if (canDownload) {
+      const emailContent = `
+        Resume Downloaded by ${name}
+        Position: ${position}
+        Company: ${company}
+        IP Address: ${ip}
+        Time: ${now}
+      `;
+
+      console.log(`[EMAIL NOTIFICATION] To: masteryoung045@gmail.com`);
+      console.log(`Subject: Resume Downloaded by ${name}`);
+      console.log(`Body: ${emailContent}`);
+
+      const mailer = getTransporter();
+      if (mailer) {
+        try {
+          await mailer.sendMail({
+            from: `"Resume Bot" <${process.env.SMTP_USER}>`,
+            to: 'masteryoung045@gmail.com',
+            subject: `Resume Downloaded by ${name}`,
+            text: emailContent
+          });
+        } catch (err) {
+          console.error('Failed to send email notification:', err);
+        }
+      }
+
+      // Serve the file
+      const filePath = path.join(__dirname, 'public', 'resume', 'resume_yangming.pdf');
+      res.download(filePath, `resume_yangming.pdf`, (err) => {
+        if (err) {
+          console.error('Failed to serve resume file:', err);
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to serve resume file' });
+          }
+        }
+      });
     }
-
-    if (memoryStats.downloadTotal >= 200) {
-      return res.status(403).json({ error: 'Monthly total download limit reached' });
-    }
-
-    const count = memoryStats.downloadIpCounts[ip] || 0;
-    if (count >= 2) {
-      return res.status(403).json({ error: 'You have reached your monthly download limit (2)' });
-    }
-
-    memoryStats.downloadTotal++;
-    memoryStats.downloadIpCounts[ip] = count + 1;
-
-    console.log(`[EMAIL NOTIFICATION] To: masteryoung045@gmail.com`);
-    console.log(`Subject: Resume Downloaded by ${name}`);
-    console.log(`Body: ${name} (${position} at ${company}) has downloaded the resume. IP: ${ip}`);
-
-    res.json({ success: true, message: 'Download started' });
   });
 
   app.all('/api/*', (req, res) => {
