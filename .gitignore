@@ -2,8 +2,8 @@ node_modules/
 build/
 dist/
 coverage/
-public/resume/
 .DS_Store
+/public/resume/
 *.log
 .env*
 !.env.example
