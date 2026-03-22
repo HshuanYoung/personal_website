@@ -5,8 +5,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
 import nodemailer from 'nodemailer';
-import fs from 'fs/promises';
-import pdfParse from 'pdf-parse';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -299,97 +297,6 @@ async function startServer() {
           }
         }
       });
-    }
-  });
-
-  // API: Resume Preview
-  app.get('/api/resume-preview', async (req, res) => {
-    try {
-      const resumeDir = path.join(__dirname, 'public', 'resume');
-      const files = await fs.readdir(resumeDir);
-      const pdfFiles = files.filter(f => f.endsWith('.pdf'));
-      
-      if (pdfFiles.length === 0) {
-        return res.status(404).json({ error: 'No resume found' });
-      }
-
-      // Read the first PDF found
-      const pdfPath = path.join(resumeDir, pdfFiles[0]);
-      const dataBuffer = await fs.readFile(pdfPath);
-      const data = await pdfParse(dataBuffer);
-      const text = data.text;
-
-      // Basic parsing logic to extract sections
-      // We look for common Chinese headings
-      const headings = ['教育背景', '工作经历', '主要项目', '自我评价', '基本信息'];
-      
-      let workExperience = '';
-      let projects = '';
-
-      // Find indices of headings
-      const indices: { name: string, index: number }[] = [];
-      for (const heading of headings) {
-        const idx = text.indexOf(heading);
-        if (idx !== -1) {
-          indices.push({ name: heading, index: idx });
-        }
-      }
-
-      // Sort by index
-      indices.sort((a, b) => a.index - b.index);
-
-      for (let i = 0; i < indices.length; i++) {
-        const current = indices[i];
-        const next = indices[i + 1];
-        const endIdx = next ? next.index : text.length;
-        
-        const content = text.substring(current.index + current.name.length, endIdx).trim();
-
-        if (current.name === '工作经历') {
-          workExperience = content;
-        } else if (current.name === '主要项目') {
-          projects = content;
-        }
-      }
-
-      // Fallback to OCR text if the PDF is just our placeholder or parsing fails to find sections
-      if (!workExperience && !projects) {
-        workExperience = `2019.07-2020.07 华为西安研究所 云计算工程师
-1.负责部门可信能力构建，三方开源软件依赖统一切换中心仓。
-2.负责实现虚拟机和系统容器混部与计算角色合一，进行统一部署。
-
-2020.07-至今 迪文科技有限公司 应用研发
-1.主导外部项目和部门内部项目的需求评估，功能设计以及市场推广。
-2.精通 UART, CAN, I2C,SPI 等常用串/并口通信协议，能够独立设计、开发并验证满足客户特定需求的定制化串口通信协议。
-3.熟练掌握全志R11的固件开发、编译、调试与烧录全流程，并参与关键功能模块的代码编写以及复杂问题的定位。
-4.23-24年间5个季度绩效排名在公司前5%，绩效占比超过30%。`;
-
-        projects = `1.外部项目：PH仪表计
-• 结合过采样原理和自行开发的滤波算法，使ph原始数据精度提升四位，稳定误差不超过0.02，最终结果接近梅特勒ph计。
-• 编写标准modbusRTU协议和典型i2c通信实时时钟，四路IO控制继电器开闭。
-• 200+页面逻辑处理，中英韩三语切换，支持ph和orp的热切换。
-
-2.外部项目：充电桩三联屏
-• 成功对接特来电充电协议，设计并增加重发机制实现双广告屏+单控制屏的可靠消息透传。
-• 编写基于http协议的云端设备注册，广告下发/自动播放以及远程OTA功能。
-
-3.内部项目：广告屏和美容屏
-• 设计并实现基于公司T5L芯片加协处理器（专责皮肤分析和视频解码）的视频播放和摄像头解决方案，模块化协处理器并提供调用接口，大幅缩短定制功能开发时间，同时降低BOM成本超20%。
-• 成功落地服务10余家客户，产生业绩超100万元。`;
-      }
-
-      // If parsing fails or sections are empty, we can provide a fallback or the raw text
-      // But we will try to return what we found.
-      res.json({
-        success: true,
-        workExperience: workExperience || 'No work experience section found.',
-        projects: projects || 'No projects section found.',
-        rawText: text // Optional: send raw text for debugging on frontend
-      });
-
-    } catch (err) {
-      console.error('Error parsing resume:', err);
-      res.status(500).json({ error: 'Failed to parse resume' });
     }
   });
 
