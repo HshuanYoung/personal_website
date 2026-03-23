@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, 
   FileText, 
-  Wrench, 
+  FlaskConical, 
   Palette, 
   Mic, 
   MessageSquare, 
@@ -19,12 +19,12 @@ import { translations, type Language } from './types';
 import { cn } from './lib/utils';
 import HomePage from './pages/Home';
 import ResumePage from './pages/Resume';
-import ToolsPage from './pages/Tools';
+import LaboratoryPage from './pages/Laboratory';
 
 export default function App() {
   const [lang, setLang] = useState<Language>('en');
-  const [currentPage, setCurrentPage] = useState<'home' | 'resume' | 'tools'>('home');
-  const [subPage, setSubPage] = useState<'color' | 'tts' | 'ai' | null>(null);
+  const [currentPage, setCurrentPage] = useState<'home' | 'resume' | 'laboratory'>('home');
+  const [subPage, setSubPage] = useState<'colors' | 'think' | 'search' | 'cook' | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const sidebarTimer = useRef<NodeJS.Timeout | null>(null);
@@ -46,54 +46,65 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
-      {/* Top Bar */}
-      <div className="fixed top-0 right-0 p-6 flex items-center gap-4 z-50">
-        <button 
-          onClick={toggleLang}
-          className="p-2 rounded-full hover:bg-white/80 transition-colors shadow-sm border border-black/5"
-          title="Switch Language"
-        >
-          <Languages size={20} />
-        </button>
-        <div className="relative">
+      {/* Topbar */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-black/5 z-50 flex items-center justify-between px-6">
+        {/* Left: Sidebar Toggle & Contact Me */}
+        <div className="flex items-center gap-2">
           <button 
-            onClick={() => setShowContact(!showContact)}
-            className="p-2 rounded-full hover:bg-white/80 transition-colors shadow-sm border border-black/5"
-            title={t.contactMe}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
           >
-            <Mail size={20} />
+            <Menu size={20} />
           </button>
-          <AnimatePresence>
-            {showContact && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
-              >
-                <a href="https://github.com/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                  <Github size={18} /> <span>GitHub</span>
-                </a>
-                <div className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer">
-                  <MessageCircle size={18} /> <span>WeChat</span>
-                </div>
-                <a href="https://linkedin.com/in/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                  <Linkedin size={18} /> <span>LinkedIn</span>
-                </a>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          
+          <div className="relative">
+            <button 
+              onClick={() => setShowContact(!showContact)}
+              className="p-2 rounded-full hover:bg-neutral-100 transition-colors flex items-center gap-2"
+              title={t.contactMe}
+            >
+              <Mail size={20} />
+              <span className="text-sm font-medium hidden sm:block">{t.contactMe}</span>
+            </button>
+            <AnimatePresence>
+              {showContact && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
+                >
+                  <a href="https://github.com/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                    <Github size={18} /> <span>GitHub</span>
+                  </a>
+                  <div className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer">
+                    <MessageCircle size={18} /> <span>WeChat</span>
+                  </div>
+                  <a href="https://linkedin.com/in/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                    <Linkedin size={18} /> <span>LinkedIn</span>
+                  </a>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
 
-      {/* Sidebar Icon (Top Left) */}
-      <div className="fixed top-0 left-0 p-6 z-50">
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 rounded-full hover:bg-white/80 transition-colors shadow-sm border border-black/5"
-        >
-          <Menu size={20} />
-        </button>
+        {/* Center: Title */}
+        <div className="absolute left-1/2 -translate-x-1/2 font-bold text-lg tracking-tight capitalize">
+          {t[currentPage]}
+        </div>
+
+        {/* Right: Language Switch */}
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleLang}
+            className="p-2 rounded-full hover:bg-neutral-100 transition-colors flex items-center gap-2"
+            title="Switch Language"
+          >
+            <Languages size={20} />
+            <span className="text-sm font-medium uppercase">{lang}</span>
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -135,22 +146,23 @@ export default function App() {
           />
           <div className="flex flex-col gap-1">
             <SidebarItem 
-              icon={<Wrench size={20} />} 
-              label={t.tools} 
-              active={currentPage === 'tools'} 
-              onClick={() => setCurrentPage('tools')} 
+              icon={<FlaskConical size={20} />} 
+              label={t.laboratory} 
+              active={currentPage === 'laboratory'} 
+              onClick={() => { setCurrentPage('laboratory'); setSubPage(null); }} 
             />
             <AnimatePresence>
-              {currentPage === 'tools' && (
+              {currentPage === 'laboratory' && (
                 <motion.div 
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   className="ml-6 flex flex-col gap-1 overflow-hidden"
                 >
-                  <SubItem label={t.color} active={subPage === 'color'} onClick={() => setSubPage('color')} />
-                  <SubItem label={t.tts} active={subPage === 'tts'} onClick={() => setSubPage('tts')} />
-                  <SubItem label={t.aiChat} active={subPage === 'ai'} onClick={() => setSubPage('ai')} />
+                  <SubItem label={t.colors} active={subPage === 'colors'} onClick={() => setSubPage('colors')} />
+                  <SubItem label={t.think} active={subPage === 'think'} onClick={() => setSubPage('think')} />
+                  <SubItem label={t.search} active={subPage === 'search'} onClick={() => setSubPage('search')} />
+                  <SubItem label={t.cook} active={subPage === 'cook'} onClick={() => setSubPage('cook')} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -170,7 +182,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {currentPage === 'home' && <HomePage key="home" lang={lang} />}
           {currentPage === 'resume' && <ResumePage key="resume" lang={lang} />}
-          {currentPage === 'tools' && <ToolsPage key="tools" lang={lang} subPage={subPage} />}
+          {currentPage === 'laboratory' && <LaboratoryPage key="laboratory" lang={lang} subPage={subPage} setSubPage={setSubPage} />}
         </AnimatePresence>
       </main>
     </div>

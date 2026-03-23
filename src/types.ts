@@ -3,10 +3,11 @@ export type Language = 'en' | 'zh';
 export interface Translation {
   home: string;
   resume: string;
-  tools: string;
-  color: string;
-  tts: string;
-  aiChat: string;
+  laboratory: string;
+  colors: string;
+  think: string;
+  search: string;
+  cook: string;
   contactMe: string;
   merit: string;
   meritFull: string;
@@ -24,10 +25,11 @@ export const translations: Record<Language, Translation> = {
   en: {
     home: 'Home',
     resume: 'Resume',
-    tools: 'Tools',
-    color: 'Color Tool',
-    tts: 'Text to Speech',
-    aiChat: 'AI Chatbot',
+    laboratory: 'Laboratory',
+    colors: 'Colors',
+    think: 'Think',
+    search: 'Search',
+    cook: 'Cook',
     contactMe: 'Contact Me',
     merit: 'Merit +1',
     meritFull: 'Merit is full, come back tomorrow',
@@ -43,10 +45,11 @@ export const translations: Record<Language, Translation> = {
   zh: {
     home: '首页',
     resume: '简历',
-    tools: '工具',
-    color: '颜色工具',
-    tts: '语音合成',
-    aiChat: 'AI 聊天',
+    laboratory: '实验室',
+    colors: '颜色',
+    think: '思考',
+    search: '搜索',
+    cook: '烹饪',
     contactMe: '联系我',
     merit: '功德 +1',
     meritFull: '功德已满，明天再来',
