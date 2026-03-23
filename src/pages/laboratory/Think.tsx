@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { type Language } from '../../types';
 import { X, FileText, FileType2, Mail } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Set up the worker for react-pdf
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 type Essay = {
   id: string;
@@ -15,6 +21,11 @@ export default function ThinkTool({ lang }: { lang: Language }) {
   const [selectedArticle, setSelectedArticle] = useState<Essay | null>(null);
   const [viewFormat, setViewFormat] = useState<'pdf' | 'txt'>('pdf');
   const [textContent, setTextContent] = useState<string>('');
+  const [numPages, setNumPages] = useState<number>();
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+  }
 
   useEffect(() => {
     fetch('/api/essays')
@@ -136,18 +147,46 @@ export default function ThinkTool({ lang }: { lang: Language }) {
               </div>
               <div className="flex-1 relative bg-neutral-100 overflow-hidden">
                 {viewFormat === 'pdf' && selectedArticle.pdf ? (
-                  <div className="w-full h-full relative">
-                    <iframe
-                      src={`${selectedArticle.pdf}#toolbar=0&navpanes=0&scrollbar=0`}
-                      className="w-full h-full border-0"
-                      title={selectedArticle.title}
-                    />
-                    {/* Transparent overlay to prevent right-click on iframe while allowing scroll if possible, though it blocks direct interaction */}
-                    <div className="absolute inset-0 bg-transparent" style={{ pointerEvents: 'none' }}></div>
+                  <div className="w-full h-full overflow-y-auto bg-neutral-200/50 flex flex-col items-center p-4 sm:p-8">
+                    <Document
+                      file={selectedArticle.pdf}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      className="flex flex-col gap-6"
+                      loading={
+                        <div className="flex items-center justify-center p-12 text-neutral-500 font-medium">
+                          Loading secure document...
+                        </div>
+                      }
+                      error={
+                        <div className="flex items-center justify-center p-12 text-red-500 font-medium">
+                          Failed to load document.
+                        </div>
+                      }
+                    >
+                      {Array.from(new Array(numPages), (el, index) => (
+                        <div key={`page_${index + 1}`} className="relative shadow-xl rounded-lg overflow-hidden bg-white">
+                          {/* Transparent overlay to block any right-clicks on the canvas */}
+                          <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+                          <Page 
+                            pageNumber={index + 1} 
+                            renderTextLayer={false} // Prevents text selection
+                            renderAnnotationLayer={false} // Prevents links/annotations
+                            width={Math.min(window.innerWidth * 0.85, 900)} // Responsive width
+                            className="pointer-events-none"
+                          />
+                        </div>
+                      ))}
+                    </Document>
                   </div>
                 ) : (
-                  <div className="w-full h-full overflow-y-auto p-8 bg-white select-none">
-                    <pre className="whitespace-pre-wrap font-sans text-neutral-800 leading-relaxed max-w-3xl mx-auto text-lg">
+                  <div 
+                    className="w-full h-full overflow-y-auto p-8 bg-white select-none"
+                    style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                  >
+                    <pre 
+                      className="whitespace-pre-wrap font-sans text-neutral-800 leading-relaxed max-w-3xl mx-auto text-lg"
+                      style={{ pointerEvents: 'none' }}
+                    >
                       {textContent}
                     </pre>
                   </div>
