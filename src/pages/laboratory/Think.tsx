@@ -101,6 +101,9 @@ export default function ThinkTool({ lang }: { lang: Language }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white w-full max-w-5xl h-[90vh] rounded-3xl overflow-hidden flex flex-col relative shadow-2xl"
+              onContextMenu={(e) => e.preventDefault()}
+              onCopy={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
             >
               <div className="flex items-center justify-between p-4 border-b border-black/5 bg-neutral-50">
                 <div className="flex items-center gap-4 px-2">
@@ -133,13 +136,17 @@ export default function ThinkTool({ lang }: { lang: Language }) {
               </div>
               <div className="flex-1 relative bg-neutral-100 overflow-hidden">
                 {viewFormat === 'pdf' && selectedArticle.pdf ? (
-                  <iframe
-                    src={selectedArticle.pdf}
-                    className="w-full h-full border-0"
-                    title={selectedArticle.title}
-                  />
+                  <div className="w-full h-full relative">
+                    <iframe
+                      src={`${selectedArticle.pdf}#toolbar=0&navpanes=0&scrollbar=0`}
+                      className="w-full h-full border-0"
+                      title={selectedArticle.title}
+                    />
+                    {/* Transparent overlay to prevent right-click on iframe while allowing scroll if possible, though it blocks direct interaction */}
+                    <div className="absolute inset-0 bg-transparent" style={{ pointerEvents: 'none' }}></div>
+                  </div>
                 ) : (
-                  <div className="w-full h-full overflow-y-auto p-8 bg-white">
+                  <div className="w-full h-full overflow-y-auto p-8 bg-white select-none">
                     <pre className="whitespace-pre-wrap font-sans text-neutral-800 leading-relaxed max-w-3xl mx-auto text-lg">
                       {textContent}
                     </pre>
