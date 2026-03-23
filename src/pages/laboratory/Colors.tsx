@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { HexColorPicker } from 'react-colorful';
-import { translations, type Language } from '../../types';
+import { type Language } from '../../types';
 
 // Conversion functions
 function hexToRgb(hex: string) {
@@ -226,11 +226,6 @@ export default function Colors({ lang }: { lang: Language }) {
         animate={{ opacity: 1, y: 0 }} 
         className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] p-8 -mx-8 -mt-8 rounded-3xl"
       >
-        {/* Title outside the UI */}
-        <h2 className="text-5xl font-black mb-10 tracking-tight text-center text-transparent bg-clip-text bg-[linear-gradient(to_right,#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#a855f7,#ec4899)] drop-shadow-md">
-          {translations[lang].colors}
-        </h2>
-
       <div className="bg-[#2c2c2c] text-white p-12 rounded-[2rem] shadow-2xl w-full max-w-5xl flex flex-col gap-12">
         
         {/* Main Content */}

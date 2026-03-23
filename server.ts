@@ -300,6 +300,35 @@ async function startServer() {
     }
   });
 
+  // API: List Essays
+  app.get('/api/essays', async (req, res) => {
+    try {
+      const fs = await import('fs/promises');
+      const essayDir = path.join(__dirname, 'public', 'assets', 'essay');
+      
+      // Check if directory exists
+      try {
+        await fs.access(essayDir);
+      } catch {
+        return res.json({ essays: [] });
+      }
+
+      const files = await fs.readdir(essayDir);
+      const essays = files
+        .filter(file => file.endsWith('.txt') || file.endsWith('.pdf'))
+        .map(file => ({
+          title: file.replace(/\.(txt|pdf)$/i, ''),
+          format: file.split('.').pop()?.toLowerCase(),
+          file: `/assets/essay/${file}`
+        }));
+        
+      res.json({ essays });
+    } catch (err) {
+      console.error('Failed to read essays directory:', err);
+      res.status(500).json({ error: 'Failed to read essays' });
+    }
+  });
+
   app.all('/api/*', (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });

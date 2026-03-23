@@ -47,63 +47,65 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
       {/* Topbar */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-black/5 z-50 flex items-center justify-between px-6">
-        {/* Left: Sidebar Toggle & Contact Me */}
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
-          >
-            <Menu size={20} />
-          </button>
-          
-          <div className="relative">
+      <div className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-black/5 z-50 flex flex-col">
+        <div className="h-16 flex items-center justify-between px-6">
+          {/* Left: Sidebar Toggle & Contact Me */}
+          <div className="flex items-center gap-2">
             <button 
-              onClick={() => setShowContact(!showContact)}
-              className="p-2 rounded-full hover:bg-neutral-100 transition-colors flex items-center gap-2"
-              title={t.contactMe}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
             >
-              <Mail size={20} />
-              <span className="text-sm font-medium hidden sm:block">{t.contactMe}</span>
+              <Menu size={20} />
             </button>
-            <AnimatePresence>
-              {showContact && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
-                >
-                  <a href="https://github.com/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                    <Github size={18} /> <span>GitHub</span>
-                  </a>
-                  <div className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer">
-                    <MessageCircle size={18} /> <span>WeChat</span>
-                  </div>
-                  <a href="https://linkedin.com/in/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                    <Linkedin size={18} /> <span>LinkedIn</span>
-                  </a>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowContact(!showContact)}
+                className="p-2 rounded-full hover:bg-neutral-100 transition-colors flex items-center gap-2"
+                title={t.contactMe}
+              >
+                <Mail size={20} />
+                <span className="text-sm font-medium hidden sm:block">{t.contactMe}</span>
+              </button>
+              <AnimatePresence>
+                {showContact && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
+                  >
+                    <a href="https://github.com/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                      <Github size={18} /> <span>GitHub</span>
+                    </a>
+                    <div className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer">
+                      <MessageCircle size={18} /> <span>WeChat</span>
+                    </div>
+                    <a href="https://linkedin.com/in/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                      <Linkedin size={18} /> <span>LinkedIn</span>
+                    </a>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
 
-        {/* Center: Title */}
-        <div className="absolute left-1/2 -translate-x-1/2 font-bold text-lg tracking-tight capitalize">
-          {t[currentPage]}
-        </div>
+          {/* Center: Title */}
+          <div className="absolute left-1/2 -translate-x-1/2 font-bold text-lg tracking-tight lowercase">
+            {t[currentPage]}{subPage ? `.${t[subPage]}` : ''}
+          </div>
 
-        {/* Right: Language Switch */}
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={toggleLang}
-            className="p-2 rounded-full hover:bg-neutral-100 transition-colors flex items-center gap-2"
-            title="Switch Language"
-          >
-            <Languages size={20} />
-            <span className="text-sm font-medium uppercase">{lang}</span>
-          </button>
+          {/* Right: Language Switch */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleLang}
+              className="p-2 rounded-full hover:bg-neutral-100 transition-colors flex items-center gap-2"
+              title="Switch Language"
+            >
+              <Languages size={20} />
+              <span className="text-sm font-medium uppercase">{lang}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -176,8 +178,9 @@ export default function App() {
 
       {/* Main Content */}
       <main className={cn(
-        "transition-all duration-500 min-h-screen pt-24 px-8 pb-12",
-        isSidebarOpen ? "pl-80" : "pl-8"
+        "transition-all duration-500 min-h-screen px-8 pb-12",
+        isSidebarOpen ? "pl-80" : "pl-8",
+        currentPage === 'laboratory' ? "pt-32" : "pt-24"
       )}>
         <AnimatePresence mode="wait">
           {currentPage === 'home' && <HomePage key="home" lang={lang} />}
