@@ -464,6 +464,34 @@ async function startServer() {
     }
   });
 
+  function parseDrugMarkdown(markdown: string, defaultTitle: string) {
+    const sections = markdown.split(/(?=^#{2,4}\s+)/m).filter(s => s.trim().length > 0);
+    
+    const parsed = [];
+    let currentIntro = '';
+
+    for (const section of sections) {
+      const match = section.match(/^#{2,4}\s+(.*)/);
+      if (match) {
+        const title = match[1].replace(/^\d+\.\s*/, '').replace(/\*+/g, '').trim();
+        parsed.push({ title, content: (currentIntro + '\n\n' + section).trim() });
+        currentIntro = '';
+      } else {
+        if (parsed.length === 0) {
+          currentIntro += section;
+        } else {
+          parsed[parsed.length - 1].content += '\n\n' + section.trim();
+        }
+      }
+    }
+
+    if (parsed.length === 0 && currentIntro) {
+      parsed.push({ title: defaultTitle, content: currentIntro.trim() });
+    }
+
+    return parsed;
+  }
+
   // API: Drug Search
   app.get('/api/drug/search', async (req, res) => {
     const q = req.query.q as string;
@@ -504,7 +532,7 @@ async function startServer() {
               // Check if it's from the current month and year
               if (stats.mtime.getMonth() === now.getMonth() && stats.mtime.getFullYear() === now.getFullYear()) {
                 const content = await fs.readFile(infoPath, 'utf-8');
-                return { title: folder, content };
+                return parseDrugMarkdown(content, folder);
               }
               return null;
             } catch {
@@ -513,7 +541,7 @@ async function startServer() {
           })
         );
         
-        const validResults = results.filter(Boolean);
+        const validResults = results.filter(Boolean).flat();
         if (validResults.length > 0) {
           return res.json({ results: validResults });
         }
@@ -581,7 +609,7 @@ async function startServer() {
       }
 
       // Generate new drug info
-      const prompt = `以Markdown格式为药品“${targetDrugName}”及其相似药品生成信息。必须包含以下内容：规格、原研/仿制类型、参考价格及报销后价格、报销规定、医保类型、说明书链接。不要将回复包裹在Markdown代码块中。`;
+      const prompt = `以Markdown格式为药品“${targetDrugName}”及其相似药品生成信息。必须包含以下内容：规格、原研/仿制类型、参考价格及报销后价格、报销规定、医保类型、说明书链接（https://drugs.dxy.cn/pc/search?keyword=药品名称）。去掉其他的说明，只需要列出药品，不要将回复包裹在Markdown代码块中。请使用二级或三级标题（## 或 ###）来分隔不同的药品。`;
       
       const response = await openai.chat.completions.create({
         model: 'deepseek-reasoner',
@@ -594,7 +622,8 @@ async function startServer() {
       await fs.mkdir(newDrugFolder, { recursive: true });
       await fs.writeFile(path.join(newDrugFolder, 'info.md'), generatedMarkdown, 'utf-8');
 
-      res.json({ results: [{ title: targetDrugName, content: generatedMarkdown }] });
+      const parsedResults = parseDrugMarkdown(generatedMarkdown, targetDrugName);
+      res.json({ results: parsedResults });
     } catch (err) {
       console.error('Drug search error:', err);
       res.status(500).json({ error: 'Failed to search or generate drug info' });
