@@ -351,33 +351,57 @@ async function startServer() {
     const q = req.query.q as string;
     if (!q) return res.status(400).json({ error: 'Search query required' });
 
-    const ip = req.ip || 'unknown';
-    const today = new Date().toISOString().split('T')[0];
-    const db = await getDbPool();
-    let currentErrorCount = 0;
-
-    if (db) {
-      try {
-        const [existing]: any = await db.query(
-          'SELECT error_count FROM cook_search_errors WHERE ip = ? AND error_date = ?',
-          [ip, today]
-        );
-        currentErrorCount = existing[0]?.error_count || 0;
-      } catch (err) {
-        console.error('Failed to check cook search errors:', err);
-      }
-    } else {
-      const key = `${ip}_${today}`;
-      currentErrorCount = memoryStats.cookSearchErrors[key] || 0;
-    }
-
-    if (currentErrorCount >= 10) {
-      return res.status(403).json({ error: 'You have reached the maximum number of incorrect inputs for today.' });
-    }
-
     try {
+      const cookbookDir = path.join(__dirname, 'public', 'cookbook');
+      await fs.mkdir(cookbookDir, { recursive: true });
+
+      const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
+      const matchingFolders = folders
+        .filter(dirent => dirent.isDirectory() && dirent.name.toLowerCase().includes(q.toLowerCase()))
+        .map(dirent => dirent.name);
+
+      if (matchingFolders.length > 0) {
+        const recipes = await Promise.all(
+          matchingFolders.map(async (folder) => {
+            const recipePath = path.join(cookbookDir, folder, 'recipe.md');
+            try {
+              const content = await fs.readFile(recipePath, 'utf-8');
+              return { title: folder, content };
+            } catch {
+              return null;
+            }
+          })
+        );
+        return res.json({ recipes: recipes.filter(Boolean) });
+      }
+
+      // No matches found, check limits and use AI to validate and generate
+      const ip = req.ip || 'unknown';
+      const today = new Date().toISOString().split('T')[0];
+      const db = await getDbPool();
+      let currentErrorCount = 0;
+
+      if (db) {
+        try {
+          const [existing]: any = await db.query(
+            'SELECT error_count FROM cook_search_errors WHERE ip = ? AND error_date = ?',
+            [ip, today]
+          );
+          currentErrorCount = existing[0]?.error_count || 0;
+        } catch (err) {
+          console.error('Failed to check cook search errors:', err);
+        }
+      } else {
+        const key = `${ip}_${today}`;
+        currentErrorCount = memoryStats.cookSearchErrors[key] || 0;
+      }
+
+      if (currentErrorCount >= 10) {
+        return res.status(403).json({ error: 'You have reached the maximum number of incorrect inputs for today.' });
+      }
+
       // Validate input using AI
-      const validationPrompt = `Determine if the following text is the name of an ingredient or a dish. Reply with only 'YES' if it is, or 'NO' if it is not. Text: "${q}"`;
+      const validationPrompt = `"${q}"是食材或者菜品名吗？仅需要返回YES或者NO`;
       const validationResponse = await openai.chat.completions.create({
         model: 'deepseek-reasoner',
         messages: [{ role: 'system', content: validationPrompt }],
@@ -409,30 +433,7 @@ async function startServer() {
         });
       }
 
-      const cookbookDir = path.join(__dirname, 'public', 'cookbook');
-      await fs.mkdir(cookbookDir, { recursive: true });
-
-      const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
-      const matchingFolders = folders
-        .filter(dirent => dirent.isDirectory() && dirent.name.toLowerCase().includes(q.toLowerCase()))
-        .map(dirent => dirent.name);
-
-      if (matchingFolders.length > 0) {
-        const recipes = await Promise.all(
-          matchingFolders.map(async (folder) => {
-            const recipePath = path.join(cookbookDir, folder, 'recipe.md');
-            try {
-              const content = await fs.readFile(recipePath, 'utf-8');
-              return { title: folder, content };
-            } catch {
-              return null;
-            }
-          })
-        );
-        return res.json({ recipes: recipes.filter(Boolean) });
-      }
-
-      // No matches found, use AI to generate
+      // Generate new recipe
       const prompt = `以Markdown格式为“${q}”生成一个食谱。包括食材准备、烹饪步骤和参考链接。不要将回复包裹在Markdown代码块中。`;
       
       const response = await openai.chat.completions.create({
