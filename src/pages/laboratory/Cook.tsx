@@ -15,6 +15,7 @@ export default function CookTool({ lang }: { lang: Language }) {
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -22,12 +23,19 @@ export default function CookTool({ lang }: { lang: Language }) {
 
     setLoading(true);
     setHasSearched(true);
+    setError(null);
     try {
       const res = await fetch(`/api/cook/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      setRecipes(data.recipes || []);
+      if (!res.ok) {
+        setError(data.error || 'Search failed');
+        setRecipes([]);
+      } else {
+        setRecipes(data.recipes || []);
+      }
     } catch (err) {
       console.error('Search failed:', err);
+      setError('Search failed');
       setRecipes([]);
     } finally {
       setLoading(false);
@@ -37,12 +45,14 @@ export default function CookTool({ lang }: { lang: Language }) {
   const handleRandomIdea = async () => {
     setLoading(true);
     setHasSearched(true);
+    setError(null);
     try {
       const res = await fetch('/api/cook/random');
       const data = await res.json();
       setRecipes(data.recipes || []);
     } catch (err) {
       console.error('Random idea failed:', err);
+      setError('Failed to fetch random recipe');
       setRecipes([]);
     } finally {
       setLoading(false);
@@ -97,6 +107,10 @@ export default function CookTool({ lang }: { lang: Language }) {
             <div className="p-12 text-center text-emerald-600 bg-white rounded-3xl border border-black/5 shadow-sm flex flex-col items-center gap-4">
               <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
               <p className="font-medium animate-pulse">Cooking up results... (AI might take a moment)</p>
+            </div>
+          ) : error ? (
+            <div className="p-12 text-center text-red-500 bg-red-50 rounded-3xl border border-red-100 shadow-sm">
+              {error}
             </div>
           ) : recipes.length > 0 ? (
             recipes.map((recipe, index) => (
@@ -155,7 +169,15 @@ export default function CookTool({ lang }: { lang: Language }) {
               </div>
               <div className="flex-1 overflow-y-auto p-8 bg-white">
                 <div className="prose prose-emerald prose-lg max-w-none prose-img:rounded-2xl prose-img:shadow-md prose-headings:text-emerald-900 prose-a:text-emerald-600">
-                  <Markdown>{selectedRecipe.content}</Markdown>
+                  <Markdown
+                    components={{
+                      a: ({ node, ...props }) => (
+                        <a {...props} target="_blank" rel="noopener noreferrer" />
+                      ),
+                    }}
+                  >
+                    {selectedRecipe.content}
+                  </Markdown>
                 </div>
               </div>
             </motion.div>

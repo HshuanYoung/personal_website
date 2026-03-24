@@ -97,6 +97,15 @@ async function getDbPool() {
         )
       `);
 
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS cook_search_errors (
+          ip VARCHAR(45),
+          error_date DATE,
+          error_count INT DEFAULT 0,
+          PRIMARY KEY (ip, error_date)
+        )
+      `);
+
       connection.release();
     } catch (err) {
       console.error('Failed to connect to MariaDB:', err);
@@ -114,7 +123,8 @@ const memoryStats = {
   meritClicksCounts: {} as Record<string, number>,
   downloadIpCounts: {} as Record<string, number>,
   downloadTotal: 0,
-  lastResetMonth: new Date().getMonth()
+  lastResetMonth: new Date().getMonth(),
+  cookSearchErrors: {} as Record<string, number>
 };
 
 async function startServer() {
@@ -341,14 +351,67 @@ async function startServer() {
     const q = req.query.q as string;
     if (!q) return res.status(400).json({ error: 'Search query required' });
 
-    const cookbookDir = path.join(__dirname, 'public', 'cookbook');
-    try {
-      await fs.mkdir(cookbookDir, { recursive: true });
-    } catch (err) {
-      console.error('Failed to create cookbook directory:', err);
+    const ip = req.ip || 'unknown';
+    const today = new Date().toISOString().split('T')[0];
+    const db = await getDbPool();
+    let currentErrorCount = 0;
+
+    if (db) {
+      try {
+        const [existing]: any = await db.query(
+          'SELECT error_count FROM cook_search_errors WHERE ip = ? AND error_date = ?',
+          [ip, today]
+        );
+        currentErrorCount = existing[0]?.error_count || 0;
+      } catch (err) {
+        console.error('Failed to check cook search errors:', err);
+      }
+    } else {
+      const key = `${ip}_${today}`;
+      currentErrorCount = memoryStats.cookSearchErrors[key] || 0;
+    }
+
+    if (currentErrorCount >= 10) {
+      return res.status(403).json({ error: 'You have reached the maximum number of incorrect inputs for today.' });
     }
 
     try {
+      // Validate input using AI
+      const validationPrompt = `Determine if the following text is the name of an ingredient or a dish. Reply with only 'YES' if it is, or 'NO' if it is not. Text: "${q}"`;
+      const validationResponse = await openai.chat.completions.create({
+        model: 'deepseek-reasoner',
+        messages: [{ role: 'system', content: validationPrompt }],
+      });
+
+      const isValid = validationResponse.choices[0].message.content?.trim().toUpperCase() === 'YES';
+
+      if (!isValid) {
+        const newErrorCount = currentErrorCount + 1;
+        const remaining = 10 - newErrorCount;
+        
+        if (db) {
+          try {
+            if (currentErrorCount > 0) {
+              await db.query('UPDATE cook_search_errors SET error_count = error_count + 1 WHERE ip = ? AND error_date = ?', [ip, today]);
+            } else {
+              await db.query('INSERT INTO cook_search_errors (ip, error_date, error_count) VALUES (?, ?, 1)', [ip, today]);
+            }
+          } catch (err) {
+            console.error('Failed to update cook search errors:', err);
+          }
+        } else {
+          const key = `${ip}_${today}`;
+          memoryStats.cookSearchErrors[key] = newErrorCount;
+        }
+
+        return res.status(400).json({ 
+          error: `This doesn't seem like a dish. To prevent abuse, you can only enter ${remaining} times` 
+        });
+      }
+
+      const cookbookDir = path.join(__dirname, 'public', 'cookbook');
+      await fs.mkdir(cookbookDir, { recursive: true });
+
       const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
       const matchingFolders = folders
         .filter(dirent => dirent.isDirectory() && dirent.name.toLowerCase().includes(q.toLowerCase()))
