@@ -5,9 +5,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
 import nodemailer from 'nodemailer';
+import fs from 'fs/promises';
+import OpenAI from 'openai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize OpenAI
+const openai = new OpenAI({ 
+  baseURL: 'https://api.deepseek.com/v1',
+  apiKey: process.env.OPENAI_API_KEY });
 
 // Email Transporter - Lazy initialization
 let transporter: nodemailer.Transporter | null = null;
@@ -326,6 +333,83 @@ async function startServer() {
     } catch (err) {
       console.error('Failed to read essays directory:', err);
       res.status(500).json({ error: 'Failed to read essays' });
+    }
+  });
+
+  // API: Cook Search
+  app.get('/api/cook/search', async (req, res) => {
+    const q = req.query.q as string;
+    if (!q) return res.status(400).json({ error: 'Search query required' });
+
+    const cookbookDir = path.join(__dirname, 'public', 'cookbook');
+    try {
+      await fs.mkdir(cookbookDir, { recursive: true });
+    } catch (err) {
+      console.error('Failed to create cookbook directory:', err);
+    }
+
+    try {
+      const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
+      const matchingFolders = folders
+        .filter(dirent => dirent.isDirectory() && dirent.name.toLowerCase().includes(q.toLowerCase()))
+        .map(dirent => dirent.name);
+
+      if (matchingFolders.length > 0) {
+        const recipes = await Promise.all(
+          matchingFolders.map(async (folder) => {
+            const recipePath = path.join(cookbookDir, folder, 'recipe.md');
+            try {
+              const content = await fs.readFile(recipePath, 'utf-8');
+              return { title: folder, content };
+            } catch {
+              return null;
+            }
+          })
+        );
+        return res.json({ recipes: recipes.filter(Boolean) });
+      }
+
+      // No matches found, use AI to generate
+      const prompt = `以Markdown格式为“${q}”生成一个食谱。包括食材准备、烹饪步骤和参考链接。不要将回复包裹在Markdown代码块中。`;
+      
+      const response = await openai.chat.completions.create({
+        model: 'deepseek-reasoner',
+        messages: [{ role: 'system', content: prompt }],
+      });
+
+      const generatedMarkdown = response.choices[0].message.content || '';
+      
+      const newRecipeFolder = path.join(cookbookDir, q);
+      await fs.mkdir(newRecipeFolder, { recursive: true });
+      await fs.writeFile(path.join(newRecipeFolder, 'recipe.md'), generatedMarkdown, 'utf-8');
+
+      res.json({ recipes: [{ title: q, content: generatedMarkdown }] });
+    } catch (err) {
+      console.error('Cook search error:', err);
+      res.status(500).json({ error: 'Failed to search or generate recipe' });
+    }
+  });
+
+  // API: Cook Random
+  app.get('/api/cook/random', async (req, res) => {
+    const cookbookDir = path.join(__dirname, 'public', 'cookbook');
+    try {
+      await fs.mkdir(cookbookDir, { recursive: true });
+      const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
+      const recipeFolders = folders.filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
+      
+      if (recipeFolders.length === 0) {
+        return res.json({ recipes: [] });
+      }
+
+      const randomFolder = recipeFolders[Math.floor(Math.random() * recipeFolders.length)];
+      const recipePath = path.join(cookbookDir, randomFolder, 'recipe.md');
+      const content = await fs.readFile(recipePath, 'utf-8');
+      
+      res.json({ recipes: [{ title: randomFolder, content }] });
+    } catch (err) {
+      console.error('Cook random error:', err);
+      res.status(500).json({ error: 'Failed to fetch random recipe' });
     }
   });
 

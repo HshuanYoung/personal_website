@@ -11,7 +11,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^1.29.0",
+    "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.14",
     "@types/nodemailer": "^7.0.11",
     "@vitejs/plugin-react": "^5.0.4",
@@ -23,6 +23,7 @@
     "motion": "^12.23.24",
     "mysql2": "^3.20.0",
     "nodemailer": "^8.0.3",
+    "openai": "^6.32.0",
     "react": "^19.0.0",
     "react-colorful": "^5.6.1",
     "react-dom": "^19.0.0",
