@@ -106,6 +106,15 @@ async function getDbPool() {
         )
       `);
 
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS drug_search_errors (
+          ip VARCHAR(45),
+          error_date DATE,
+          error_count INT DEFAULT 0,
+          PRIMARY KEY (ip, error_date)
+        )
+      `);
+
       connection.release();
     } catch (err) {
       console.error('Failed to connect to MariaDB:', err);
@@ -124,7 +133,8 @@ const memoryStats = {
   downloadIpCounts: {} as Record<string, number>,
   downloadTotal: 0,
   lastResetMonth: new Date().getMonth(),
-  cookSearchErrors: {} as Record<string, number>
+  cookSearchErrors: {} as Record<string, number>,
+  drugSearchErrors: {} as Record<string, number>
 };
 
 async function startServer() {
@@ -451,6 +461,143 @@ async function startServer() {
     } catch (err) {
       console.error('Cook search error:', err);
       res.status(500).json({ error: 'Failed to search or generate recipe' });
+    }
+  });
+
+  // API: Drug Search
+  app.get('/api/drug/search', async (req, res) => {
+    const q = req.query.q as string;
+    if (!q) return res.status(400).json({ error: 'Search query required' });
+
+    try {
+      const drugsDir = path.join(__dirname, 'public', 'drugs');
+      await fs.mkdir(drugsDir, { recursive: true });
+
+      const folders = await fs.readdir(drugsDir, { withFileTypes: true });
+      const queryLower = q.toLowerCase();
+      
+      let matchingFolders = folders
+        .filter(dirent => {
+          if (!dirent.isDirectory()) return false;
+          const folderName = dirent.name.toLowerCase();
+          return folderName.includes(queryLower) || (folderName.length >= 2 && queryLower.includes(folderName));
+        })
+        .map(dirent => dirent.name);
+
+      // Sort to put the best match first
+      matchingFolders.sort((a, b) => {
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        if (aLower === queryLower) return -1;
+        if (bLower === queryLower) return 1;
+        return a.length - b.length;
+      });
+
+      const now = new Date();
+
+      if (matchingFolders.length > 0) {
+        const results = await Promise.all(
+          matchingFolders.map(async (folder) => {
+            const infoPath = path.join(drugsDir, folder, 'info.md');
+            try {
+              const stats = await fs.stat(infoPath);
+              // Check if it's from the current month and year
+              if (stats.mtime.getMonth() === now.getMonth() && stats.mtime.getFullYear() === now.getFullYear()) {
+                const content = await fs.readFile(infoPath, 'utf-8');
+                return { title: folder, content };
+              }
+              return null;
+            } catch {
+              return null;
+            }
+          })
+        );
+        
+        const validResults = results.filter(Boolean);
+        if (validResults.length > 0) {
+          return res.json({ results: validResults });
+        }
+      }
+
+      // No matches found or cache is old, check limits and use AI to validate and generate
+      // To avoid duplicate creation, if we had a fuzzy match but it was old, we update the best match
+      const targetDrugName = matchingFolders.length > 0 ? matchingFolders[0] : q;
+
+      const ip = req.ip || 'unknown';
+      const today = now.toISOString().split('T')[0];
+      const db = await getDbPool();
+      let currentErrorCount = 0;
+
+      if (db) {
+        try {
+          const [existing]: any = await db.query(
+            'SELECT error_count FROM drug_search_errors WHERE ip = ? AND error_date = ?',
+            [ip, today]
+          );
+          currentErrorCount = existing[0]?.error_count || 0;
+        } catch (err) {
+          console.error('Failed to check drug search errors:', err);
+        }
+      } else {
+        const key = `${ip}_${today}`;
+        currentErrorCount = memoryStats.drugSearchErrors[key] || 0;
+      }
+
+      if (currentErrorCount >= 3) {
+        return res.status(403).json({ error: 'You have reached the maximum number of incorrect inputs for today.' });
+      }
+
+      // Validate input using AI
+      const validationPrompt = `"${q}"是药品全称或者简写吗？仅需要返回YES或者NO`;
+      const validationResponse = await openai.chat.completions.create({
+        model: 'deepseek-reasoner',
+        messages: [{ role: 'system', content: validationPrompt }],
+      });
+
+      const isValid = validationResponse.choices[0].message.content?.trim().toUpperCase() === 'YES';
+
+      if (!isValid) {
+        const newErrorCount = currentErrorCount + 1;
+        const remaining = 3 - newErrorCount;
+        
+        if (db) {
+          try {
+            if (currentErrorCount > 0) {
+              await db.query('UPDATE drug_search_errors SET error_count = error_count + 1 WHERE ip = ? AND error_date = ?', [ip, today]);
+            } else {
+              await db.query('INSERT INTO drug_search_errors (ip, error_date, error_count) VALUES (?, ?, 1)', [ip, today]);
+            }
+          } catch (err) {
+            console.error('Failed to update drug search errors:', err);
+          }
+        } else {
+          const key = `${ip}_${today}`;
+          memoryStats.drugSearchErrors[key] = newErrorCount;
+        }
+
+        return res.status(400).json({ 
+          error: `This doesn't seem like a drug. To prevent abuse, you can only enter ${remaining} times` 
+        });
+      }
+
+      // Generate new drug info
+      const prompt = `以Markdown格式为药品“${targetDrugName}”及其相似药品生成信息。必须包含以下内容：规格、原研/仿制类型、参考价格及报销后价格、报销规定、医保类型、说明书链接。不要将回复包裹在Markdown代码块中。`;
+      
+      const response = await openai.chat.completions.create({
+        model: 'deepseek-reasoner',
+        messages: [{ role: 'system', content: prompt }],
+      });
+
+      const generatedMarkdown = response.choices[0].message.content || '';
+      
+      const newDrugFolder = path.join(drugsDir, targetDrugName);
+      await fs.mkdir(newDrugFolder, { recursive: true });
+      await fs.writeFile(path.join(newDrugFolder, 'info.md'), generatedMarkdown, 'utf-8');
+
+      res.json({ results: [{ title: targetDrugName, content: generatedMarkdown }] });
+    } catch (err) {
+      console.error('Drug search error:', err);
+      res.status(500).json({ error: 'Failed to search or generate drug info' });
     }
   });
 

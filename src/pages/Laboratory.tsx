@@ -36,7 +36,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
       {
         id: 'search' as const,
         title: t.search,
-        description: 'find PDFs, TXTs',
+        description: 'query drug information',
         icon: <Search size={32} />,
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
