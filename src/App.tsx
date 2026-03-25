@@ -28,22 +28,22 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showWechatQR, setShowWechatQR] = useState(false);
-  const sidebarTimer = useRef<NodeJS.Timeout | null>(null);
 
   const t = translations[lang];
 
-  const handleSidebarHover = (isHovering: boolean) => {
-    if (isHovering) {
-      if (sidebarTimer.current) clearTimeout(sidebarTimer.current);
-      setIsSidebarOpen(true);
-    } else {
-      sidebarTimer.current = setTimeout(() => {
-        setIsSidebarOpen(false);
-      }, 5000);
-    }
+  const toggleLang = () => setLang(prev => prev === 'en' ? 'zh' : 'en');
+
+  // Close sidebar when clicking a menu item
+  const handleNavClick = (page: 'home' | 'resume' | 'laboratory') => {
+    setCurrentPage(page);
+    setSubPage(null);
+    setIsSidebarOpen(false);
   };
 
-  const toggleLang = () => setLang(prev => prev === 'en' ? 'zh' : 'en');
+  const handleSubNavClick = (page: 'colors' | 'think' | 'search' | 'cook') => {
+    setSubPage(page);
+    setIsSidebarOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans selection:bg-emerald-100 selection:text-emerald-900">
@@ -70,25 +70,34 @@ export default function App() {
               </button>
               <AnimatePresence>
                 {showContact && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
-                  >
-                    <a href="https://github.com/HshuanYoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                      <Github size={18} /> <span>GitHub</span>
-                    </a>
+                  <>
                     <div 
-                      className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
-                      onClick={() => setShowWechatQR(true)}
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowContact(false)}
+                    />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden z-50"
                     >
-                      <MessageCircle size={18} /> <span>WeChat</span>
-                    </div>
-                    <a href="mailto:masteryoung045@gmail.com" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                      <Mail size={18} /> <span>Email</span>
-                    </a>
-                  </motion.div>
+                      <a href="https://github.com/HshuanYoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                        <Github size={18} /> <span>GitHub</span>
+                      </a>
+                      <div 
+                        className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
+                        onClick={() => {
+                          setShowContact(false);
+                          setShowWechatQR(true);
+                        }}
+                      >
+                        <MessageCircle size={18} /> <span>WeChat</span>
+                      </div>
+                      <a href="mailto:masteryoung045@gmail.com" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                        <Mail size={18} /> <span>Email</span>
+                      </a>
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
@@ -113,14 +122,25 @@ export default function App() {
         </div>
       </div>
 
+      {/* Sidebar Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <motion.nav 
-        onMouseEnter={() => handleSidebarHover(true)}
-        onMouseLeave={() => handleSidebarHover(false)}
         initial={false}
         animate={{ x: isSidebarOpen ? 0 : -280 }}
         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-        className="fixed top-0 left-0 h-full w-72 bg-white/80 backdrop-blur-xl border-r border-black/5 z-40 p-8 flex flex-col gap-8 shadow-2xl"
+        className="fixed top-0 left-0 h-full w-72 bg-white/90 backdrop-blur-xl border-r border-black/5 z-40 p-8 flex flex-col gap-8 shadow-2xl"
       >
         <div className="mt-12 flex items-center gap-4">
           <img 
@@ -142,20 +162,20 @@ export default function App() {
             icon={<Home size={20} />} 
             label={t.home} 
             active={currentPage === 'home'} 
-            onClick={() => { setCurrentPage('home'); setSubPage(null); }} 
+            onClick={() => handleNavClick('home')} 
           />
           <SidebarItem 
             icon={<FileText size={20} />} 
             label={t.resume} 
             active={currentPage === 'resume'} 
-            onClick={() => { setCurrentPage('resume'); setSubPage(null); }} 
+            onClick={() => handleNavClick('resume')} 
           />
           <div className="flex flex-col gap-1">
             <SidebarItem 
               icon={<FlaskConical size={20} />} 
               label={t.laboratory} 
               active={currentPage === 'laboratory'} 
-              onClick={() => { setCurrentPage('laboratory'); setSubPage(null); }} 
+              onClick={() => handleNavClick('laboratory')} 
             />
             <AnimatePresence>
               {currentPage === 'laboratory' && (
@@ -165,10 +185,10 @@ export default function App() {
                   exit={{ height: 0, opacity: 0 }}
                   className="ml-6 flex flex-col gap-1 overflow-hidden"
                 >
-                  <SubItem label={t.colors} active={subPage === 'colors'} onClick={() => setSubPage('colors')} />
-                  <SubItem label={t.think} active={subPage === 'think'} onClick={() => setSubPage('think')} />
-                  <SubItem label={t.search} active={subPage === 'search'} onClick={() => setSubPage('search')} />
-                  <SubItem label={t.cook} active={subPage === 'cook'} onClick={() => setSubPage('cook')} />
+                  <SubItem label={t.colors} active={subPage === 'colors'} onClick={() => handleSubNavClick('colors')} />
+                  <SubItem label={t.think} active={subPage === 'think'} onClick={() => handleSubNavClick('think')} />
+                  <SubItem label={t.search} active={subPage === 'search'} onClick={() => handleSubNavClick('search')} />
+                  <SubItem label={t.cook} active={subPage === 'cook'} onClick={() => handleSubNavClick('cook')} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -182,8 +202,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className={cn(
-        "transition-all duration-500 min-h-screen px-8 pb-12",
-        isSidebarOpen ? "pl-80" : "pl-8",
+        "transition-all duration-500 min-h-screen px-4 sm:px-8 pb-12",
         currentPage === 'laboratory' ? "pt-32" : "pt-24"
       )}>
         <AnimatePresence mode="wait">
@@ -210,7 +229,7 @@ export default function App() {
               className="bg-white p-6 rounded-3xl shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <img src="/assets/icon/wechat.png" alt="WeChat QR Code" className="w-64 h-64 object-contain rounded-xl" />
+              <img src="/assets/icon/wechat.jpg" alt="WeChat QR Code" className="w-64 h-64 object-contain rounded-xl" />
               <button 
                 onClick={() => setShowWechatQR(false)}
                 className="mt-6 w-full py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-xl font-medium transition-colors"

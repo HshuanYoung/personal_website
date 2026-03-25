@@ -94,7 +94,7 @@ export default function CookTool({ lang }: { lang: Language }) {
               className="px-6 py-4 bg-emerald-100 hover:bg-emerald-200 disabled:opacity-50 text-emerald-800 font-bold rounded-2xl transition-colors whitespace-nowrap flex items-center gap-2"
             >
               <Sparkles size={20} />
-              <span className="hidden sm:inline">Idea</span>
+              <span>Idea</span>
             </button>
           </div>
         </form>

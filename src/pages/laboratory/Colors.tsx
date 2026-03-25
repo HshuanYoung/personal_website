@@ -226,7 +226,7 @@ export default function Colors({ lang }: { lang: Language }) {
         animate={{ opacity: 1, y: 0 }} 
         className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] p-8 -mx-8 -mt-8 rounded-3xl"
       >
-      <div className="bg-[#2c2c2c] text-white p-12 rounded-[2rem] shadow-2xl w-full max-w-5xl flex flex-col gap-12">
+      <div className="bg-[#2c2c2c] text-white p-6 sm:p-12 rounded-[2rem] shadow-2xl w-full max-w-5xl flex flex-col gap-12">
         
         {/* Main Content */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-12">
@@ -319,43 +319,43 @@ export default function Colors({ lang }: { lang: Language }) {
         </div>
 
         {/* Bottom Row - Single Line */}
-        <div className="flex flex-row justify-between items-end gap-4 mt-4 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 sm:gap-4 mt-4 w-full">
           
           {/* HSL */}
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">HSL</label>
-            <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <input value={hsl.h} onChange={e => handleHslChange(parseInt(e.target.value)||0, hsl.s, hsl.l)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+            <div className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
+              <input value={hsl.h} onChange={e => handleHslChange(parseInt(e.target.value)||0, hsl.s, hsl.l)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsl.s} onChange={e => handleHslChange(hsl.h, parseInt(e.target.value)||0, hsl.l)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={hsl.s} onChange={e => handleHslChange(hsl.h, parseInt(e.target.value)||0, hsl.l)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsl.l} onChange={e => handleHslChange(hsl.h, hsl.s, parseInt(e.target.value)||0)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={hsl.l} onChange={e => handleHslChange(hsl.h, hsl.s, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
           {/* HSV */}
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">HSV</label>
-            <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <input value={hsv.h} onChange={e => handleHsvChange(parseInt(e.target.value)||0, hsv.s, hsv.v)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+            <div className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
+              <input value={hsv.h} onChange={e => handleHsvChange(parseInt(e.target.value)||0, hsv.s, hsv.v)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsv.s} onChange={e => handleHsvChange(hsv.h, parseInt(e.target.value)||0, hsv.v)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={hsv.s} onChange={e => handleHsvChange(hsv.h, parseInt(e.target.value)||0, hsv.v)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsv.v} onChange={e => handleHsvChange(hsv.h, hsv.s, parseInt(e.target.value)||0)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={hsv.v} onChange={e => handleHsvChange(hsv.h, hsv.s, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
           {/* CMYK */}
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">CMYK</label>
-            <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <input value={cmyk.c} onChange={e => handleCmykChange(parseInt(e.target.value)||0, cmyk.m, cmyk.y, cmyk.k)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+            <div className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
+              <input value={cmyk.c} onChange={e => handleCmykChange(parseInt(e.target.value)||0, cmyk.m, cmyk.y, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={cmyk.m} onChange={e => handleCmykChange(cmyk.c, parseInt(e.target.value)||0, cmyk.y, cmyk.k)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={cmyk.m} onChange={e => handleCmykChange(cmyk.c, parseInt(e.target.value)||0, cmyk.y, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={cmyk.y} onChange={e => handleCmykChange(cmyk.c, cmyk.m, parseInt(e.target.value)||0, cmyk.k)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={cmyk.y} onChange={e => handleCmykChange(cmyk.c, cmyk.m, parseInt(e.target.value)||0, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={cmyk.k} onChange={e => handleCmykChange(cmyk.c, cmyk.m, cmyk.y, parseInt(e.target.value)||0)} className="bg-white text-black px-2 py-2 rounded-lg w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input value={cmyk.k} onChange={e => handleCmykChange(cmyk.c, cmyk.m, cmyk.y, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 

@@ -67,7 +67,7 @@ export default function Home({ lang }: { lang: Language }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col items-center justify-center h-[70vh] gap-12"
+      className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] py-8 gap-12"
     >
       <div className="text-center">
         <h2 className="text-5xl font-bold tracking-tight mb-4">hsyoung.icu</h2>
