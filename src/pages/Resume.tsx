@@ -30,7 +30,7 @@ export default function Resume({ lang }: { lang: Language }) {
   const t = translations[lang];
 
   useEffect(() => {
-    fetch('/resume/resume_describe.json')
+    fetch('/assets/resume/resume_describe.json')
       .then(res => res.json())
       .then(data => {
         setResumeData(data[lang]);

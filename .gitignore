@@ -3,7 +3,12 @@ build/
 dist/
 coverage/
 .DS_Store
-/public/resume/
+/assets/resume/*
+/assets/essay/*
+/assets/icon/*
+/assets/mp3/*
+/assets/cookbook/*
+/assets/drugs/*
 *.log
 .env*
 !.env.example

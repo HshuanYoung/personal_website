@@ -27,6 +27,7 @@ export default function App() {
   const [subPage, setSubPage] = useState<'colors' | 'think' | 'search' | 'cook' | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [showWechatQR, setShowWechatQR] = useState(false);
   const sidebarTimer = useRef<NodeJS.Timeout | null>(null);
 
   const t = translations[lang];
@@ -75,14 +76,17 @@ export default function App() {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute left-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-black/5 p-2 overflow-hidden"
                   >
-                    <a href="https://github.com/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                    <a href="https://github.com/HshuanYoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
                       <Github size={18} /> <span>GitHub</span>
                     </a>
-                    <div className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer">
+                    <div 
+                      className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
+                      onClick={() => setShowWechatQR(true)}
+                    >
                       <MessageCircle size={18} /> <span>WeChat</span>
                     </div>
-                    <a href="https://linkedin.com/in/hsyoung" target="_blank" rel="noreferrer" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
-                      <Linkedin size={18} /> <span>LinkedIn</span>
+                    <a href="mailto:masteryoung045@gmail.com" className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-xl transition-colors">
+                      <Mail size={18} /> <span>Email</span>
                     </a>
                   </motion.div>
                 )}
@@ -188,6 +192,35 @@ export default function App() {
           {currentPage === 'laboratory' && <LaboratoryPage key="laboratory" lang={lang} subPage={subPage} setSubPage={setSubPage} />}
         </AnimatePresence>
       </main>
+
+      {/* WeChat QR Modal */}
+      <AnimatePresence>
+        {showWechatQR && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowWechatQR(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white p-6 rounded-3xl shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <img src="/assets/icon/wechat.png" alt="WeChat QR Code" className="w-64 h-64 object-contain rounded-xl" />
+              <button 
+                onClick={() => setShowWechatQR(false)}
+                className="mt-6 w-full py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-xl font-medium transition-colors"
+              >
+                Close
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

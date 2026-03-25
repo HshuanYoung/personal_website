@@ -315,7 +315,7 @@ async function startServer() {
       }
 
       // Serve the file
-      const filePath = path.join(__dirname, 'public', 'resume', 'resume_yangming.pdf');
+      const filePath = path.join(__dirname, 'assets', 'resume', 'resume_yangming.pdf');
       res.download(filePath, `resume_yangming.pdf`, (err) => {
         if (err) {
           console.error('Failed to serve resume file:', err);
@@ -331,7 +331,7 @@ async function startServer() {
   app.get('/api/essays', async (req, res) => {
     try {
       const fs = await import('fs/promises');
-      const essayDir = path.join(__dirname, 'public', 'assets', 'essay');
+      const essayDir = path.join(__dirname, 'assets', 'essay');
       
       // Check if directory exists
       try {
@@ -362,7 +362,7 @@ async function startServer() {
     if (!q) return res.status(400).json({ error: 'Search query required' });
 
     try {
-      const cookbookDir = path.join(__dirname, 'public', 'cookbook');
+      const cookbookDir = path.join(__dirname, 'assets', 'cookbook');
       await fs.mkdir(cookbookDir, { recursive: true });
 
       const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
@@ -498,7 +498,7 @@ async function startServer() {
     if (!q) return res.status(400).json({ error: 'Search query required' });
 
     try {
-      const drugsDir = path.join(__dirname, 'public', 'drugs');
+      const drugsDir = path.join(__dirname, 'assets', 'drugs');
       await fs.mkdir(drugsDir, { recursive: true });
 
       const folders = await fs.readdir(drugsDir, { withFileTypes: true });
@@ -576,7 +576,7 @@ async function startServer() {
       }
 
       // Validate input using AI
-      const validationPrompt = `"${q}"是药品全称或者简写吗？仅需要返回YES或者NO`;
+      const validationPrompt = `"${q}"是药品吗？仅需要返回YES或者NO`;
       const validationResponse = await openai.chat.completions.create({
         model: 'deepseek-reasoner',
         messages: [{ role: 'system', content: validationPrompt }],
@@ -609,7 +609,7 @@ async function startServer() {
       }
 
       // Generate new drug info
-      const prompt = `以Markdown格式为药品“${targetDrugName}”及其相似药品生成信息。必须包含以下内容：规格、原研/仿制类型、参考价格及报销后价格、报销规定、医保类型、说明书链接（https://drugs.dxy.cn/pc/search?keyword=药品名称）。去掉其他的说明，只需要列出药品，不要将回复包裹在Markdown代码块中。请使用二级或三级标题（## 或 ###）来分隔不同的药品。`;
+      const prompt = `以Markdown格式为药品“${targetDrugName}”及其相似药品生成信息。必须包含以下内容：规格、原研/仿制类型、参考价格及报销后价格、报销规定、医保类型、说明书（https://drugs.dxy.cn/pc/search?keyword=药品名称）并链接。注意：去掉其他说明，只列出药品，并用三级标题（###）分隔药品，其他不使用三级标题或者二级标题，不要将回复包裹在Markdown代码块中`;
       
       const response = await openai.chat.completions.create({
         model: 'deepseek-reasoner',
@@ -632,7 +632,7 @@ async function startServer() {
 
   // API: Cook Random
   app.get('/api/cook/random', async (req, res) => {
-    const cookbookDir = path.join(__dirname, 'public', 'cookbook');
+    const cookbookDir = path.join(__dirname, 'assets', 'cookbook');
     try {
       await fs.mkdir(cookbookDir, { recursive: true });
       const folders = await fs.readdir(cookbookDir, { withFileTypes: true });
@@ -656,6 +656,9 @@ async function startServer() {
   app.all('/api/*', (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });
+
+  // Serve assets directory explicitly
+  app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

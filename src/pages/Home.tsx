@@ -23,7 +23,7 @@ export default function Home({ lang }: { lang: Language }) {
       .catch(err => console.error('Failed to fetch merit stats:', err));
     
     // Preload "muyu" sound
-    audioRef.current = new Audio('https://www.myinstants.com/media/sounds/muyu.mp3');
+    audioRef.current = new Audio('/assets/mp3/muyu.mp3');
     audioRef.current.load();
   }, []);
 
@@ -178,17 +178,23 @@ export default function Home({ lang }: { lang: Language }) {
         <div className="flex flex-col items-center gap-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Daily Merit Progress</span>
           <div className="flex gap-2">
-            {[...Array(10)].map((_, i) => (
-              <motion.div 
-                key={i} 
-                initial={false}
-                animate={{ 
-                  backgroundColor: i < meritCount ? "#10b981" : "#e5e5e5",
-                  scale: i < meritCount ? [1, 1.2, 1] : 1
-                }}
-                className="w-3 h-3 rounded-full shadow-inner" 
-              />
-            ))}
+            {[...Array(10)].map((_, i) => {
+              let color = "#10b981"; // green
+              if (meritCount >= 7 && meritCount <= 9) color = "#eab308"; // yellow
+              if (meritCount >= 10) color = "#ef4444"; // red
+              
+              return (
+                <motion.div 
+                  key={i} 
+                  initial={false}
+                  animate={{ 
+                    backgroundColor: i < meritCount ? color : "#e5e5e5",
+                    scale: i < meritCount ? [1, 1.2, 1] : 1
+                  }}
+                  className="w-3 h-3 rounded-full shadow-inner" 
+                />
+              );
+            })}
           </div>
         </div>
 
