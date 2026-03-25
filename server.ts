@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
 import nodemailer from 'nodemailer';
 import fs from 'fs/promises';
+import fsSync from 'fs';
+import https from 'https';
 import OpenAI from 'openai';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -143,6 +145,14 @@ async function startServer() {
   const PORT = 3000;
 
   app.set('trust proxy', true);
+
+  // Force HTTPS
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
 
   app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -674,9 +684,19 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  if (process.env.HTTPS_KEY && process.env.HTTPS_CERT) {
+    const options = {
+      key: fsSync.readFileSync(process.env.HTTPS_KEY),
+      cert: fsSync.readFileSync(process.env.HTTPS_CERT)
+    };
+    https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on https://localhost:${PORT}`);
+    });
+  } else {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer();
