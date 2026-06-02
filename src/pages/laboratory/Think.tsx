@@ -5,6 +5,7 @@ import { X, FileText, FileType2, Mail } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { apiUrl, assetUrl } from '../../lib/runtime';
 
 // Set up the worker for react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -28,7 +29,7 @@ export default function ThinkTool({ lang }: { lang: Language }) {
   }
 
   useEffect(() => {
-    fetch('/api/essays')
+    fetch(apiUrl('/api/essays'))
       .then(res => res.json())
       .then(data => {
         const grouped = data.essays.reduce((acc: Record<string, Essay>, curr: any) => {
@@ -47,7 +48,7 @@ export default function ThinkTool({ lang }: { lang: Language }) {
   useEffect(() => {
     if (selectedArticle && viewFormat === 'txt' && selectedArticle.txt) {
       setTextContent('Loading text...');
-      fetch(selectedArticle.txt)
+      fetch(assetUrl(selectedArticle.txt))
         .then(res => res.text())
         .then(text => setTextContent(text))
         .catch(() => setTextContent('Failed to load text content.'));
@@ -149,7 +150,7 @@ export default function ThinkTool({ lang }: { lang: Language }) {
                 {viewFormat === 'pdf' && selectedArticle.pdf ? (
                   <div className="w-full h-full overflow-y-auto bg-neutral-200/50 flex flex-col items-center p-4 sm:p-8">
                     <Document
-                      file={selectedArticle.pdf}
+                      file={assetUrl(selectedArticle.pdf)}
                       onLoadSuccess={onDocumentLoadSuccess}
                       className="flex flex-col gap-6"
                       loading={

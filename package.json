@@ -1,12 +1,17 @@
 {
-  "name": "react-example",
+  "name": "hsyoung-com",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "node scripts/run-services.mjs dev",
+    "dev:frontend": "vite",
+    "dev:backend": "tsx server.ts",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0 --port 3002 --strictPort",
+    "start": "node scripts/run-services.mjs start",
+    "start:frontend": "vite preview --host 0.0.0.0 --port 3002 --strictPort",
+    "start:backend": "tsx server.ts",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },

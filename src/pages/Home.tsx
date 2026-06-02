@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { translations, type Language } from '../types';
 import { cn } from '../lib/utils';
+import { apiUrl, assetUrl } from '../lib/runtime';
 
 export default function Home({ lang }: { lang: Language }) {
   const [meritCount, setMeritCount] = useState(0);
@@ -14,7 +15,7 @@ export default function Home({ lang }: { lang: Language }) {
   const [isHitting, setIsHitting] = useState(false);
 
   useEffect(() => {
-    fetch('/api/merit-stats')
+    fetch(apiUrl('/api/merit-stats'))
       .then(res => res.json())
       .then(data => {
         setTotalMerit(data.total);
@@ -23,7 +24,7 @@ export default function Home({ lang }: { lang: Language }) {
       .catch(err => console.error('Failed to fetch merit stats:', err));
     
     // Preload "muyu" sound
-    audioRef.current = new Audio('/assets/mp3/muyu.mp3');
+    audioRef.current = new Audio(assetUrl('/assets/mp3/muyu.mp3'));
     audioRef.current.load();
   }, []);
 
@@ -41,7 +42,7 @@ export default function Home({ lang }: { lang: Language }) {
     setTimeout(() => setIsHitting(false), 200);
 
     try {
-      const response = await fetch('/api/click-fish', {
+      const response = await fetch(apiUrl('/api/click-fish'), {
         method: 'POST',
       });
 
@@ -70,7 +71,7 @@ export default function Home({ lang }: { lang: Language }) {
       className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] py-8 gap-12"
     >
       <div className="text-center">
-        <h2 className="text-5xl font-bold tracking-tight mb-4">hsyoung.icu</h2>
+        <h2 className="text-5xl font-bold tracking-tight mb-4">hsyoung.com</h2>
         <p className="text-neutral-500 max-w-md mx-auto">
           Welcome to my personal page.Try click it!
         </p>

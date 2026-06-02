@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { translations, type Language } from './types';
 import { cn } from './lib/utils';
+import { assetUrl } from './lib/runtime';
 import HomePage from './pages/Home';
 import ResumePage from './pages/Resume';
 import LaboratoryPage from './pages/Laboratory';
@@ -144,7 +145,7 @@ export default function App() {
       >
         <div className="mt-12 flex items-center gap-4">
           <img 
-            src="/assets/logo.png" 
+            src={assetUrl('/assets/logo.png')} 
             alt="Logo" 
             className="w-10 h-10 rounded-xl object-contain"
             onError={(e) => {
@@ -152,7 +153,7 @@ export default function App() {
             }}
           />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">hsyoung.icu</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">hsyoung.com</h1>
             <p className="text-xs text-neutral-500 font-mono mt-1 uppercase tracking-widest">Personal Space</p>
           </div>
         </div>
@@ -196,7 +197,7 @@ export default function App() {
         </div>
 
         <div className="mt-auto text-[10px] text-neutral-400 font-mono uppercase tracking-widest">
-          © 2026 hsyoung.icu
+          © 2026 hsyoung.com
         </div>
       </motion.nav>
 
@@ -229,7 +230,7 @@ export default function App() {
               className="bg-white p-6 rounded-3xl shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <img src="/assets/icon/wechat.jpg" alt="WeChat QR Code" className="w-64 h-64 object-contain rounded-xl" />
+              <img src={assetUrl('/assets/icon/wechat.jpg')} alt="WeChat QR Code" className="w-64 h-64 object-contain rounded-xl" />
               <button 
                 onClick={() => setShowWechatQR(false)}
                 className="mt-6 w-full py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 rounded-xl font-medium transition-colors"

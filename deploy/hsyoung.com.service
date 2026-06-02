@@ -1,0 +1,23 @@
+[Unit]
+Description=hsyoung.com frontend and backend
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/hsyoung.com/current
+Environment=NODE_ENV=production
+Environment=FRONTEND_HOST=0.0.0.0
+Environment=FRONTEND_PORT=3002
+Environment=BACKEND_HOST=0.0.0.0
+Environment=BACKEND_PORT=3003
+Environment=FRONTEND_ORIGIN=https://hsyoung.com,http://hsyoung.com,http://127.0.0.1:3002,http://localhost:3002
+Environment=VITE_API_BASE_URL=
+Environment=VITE_ASSETS_BASE_URL=
+ExecStartPre=/usr/bin/npm run build
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
@@ -140,9 +139,14 @@ const memoryStats = {
 };
 
 async function startServer() {
-  console.log('Starting Express server with Vite middleware...');
+  console.log('Starting API server...');
   const app = express();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.BACKEND_PORT || '3003', 10);
+  const HOST = process.env.BACKEND_HOST || '0.0.0.0';
+  const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://127.0.0.1:3002,http://localhost:3002,https://hsyoung.com,http://hsyoung.com')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
 
   app.set('trust proxy', true);
 
@@ -160,6 +164,21 @@ async function startServer() {
   });
 
   app.use(express.json());
+  app.use((req, res, next) => {
+    const requestOrigin = req.headers.origin;
+    if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+      res.header('Access-Control-Allow-Origin', requestOrigin);
+      res.header('Vary', 'Origin');
+    }
+    res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+
+    next();
+  });
 
   // API: Health Check
   app.get('/api/health', (req, res) => {
@@ -670,31 +689,17 @@ async function startServer() {
   // Serve assets directory explicitly
   app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
   if (process.env.HTTPS_KEY && process.env.HTTPS_CERT) {
     const options = {
       key: fsSync.readFileSync(process.env.HTTPS_KEY),
       cert: fsSync.readFileSync(process.env.HTTPS_CERT)
     };
-    https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on https://localhost:${PORT}`);
+    https.createServer(options, app).listen(PORT, HOST, () => {
+      console.log(`API server running on https://${HOST}:${PORT}`);
     });
   } else {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+    app.listen(PORT, HOST, () => {
+      console.log(`API server running on http://${HOST}:${PORT}`);
     });
   }
 }

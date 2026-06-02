@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { type Language } from '../../types';
 import { Search, X, Pill } from 'lucide-react';
 import Markdown from 'react-markdown';
+import { apiUrl } from '../../lib/runtime';
 
 type DrugResult = {
   title: string;
@@ -25,7 +26,7 @@ export default function SearchTool({ lang }: { lang: Language }) {
     setHasSearched(true);
     setError(null);
     try {
-      const res = await fetch(`/api/drug/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(apiUrl(`/api/drug/search?q=${encodeURIComponent(query)}`));
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Search failed');

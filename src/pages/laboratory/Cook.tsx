@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { type Language } from '../../types';
 import { Search, Sparkles, X, ChefHat } from 'lucide-react';
 import Markdown from 'react-markdown';
+import { apiUrl } from '../../lib/runtime';
 
 type Recipe = {
   title: string;
@@ -25,7 +26,7 @@ export default function CookTool({ lang }: { lang: Language }) {
     setHasSearched(true);
     setError(null);
     try {
-      const res = await fetch(`/api/cook/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(apiUrl(`/api/cook/search?q=${encodeURIComponent(query)}`));
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Search failed');
@@ -47,7 +48,7 @@ export default function CookTool({ lang }: { lang: Language }) {
     setHasSearched(true);
     setError(null);
     try {
-      const res = await fetch('/api/cook/random');
+      const res = await fetch(apiUrl('/api/cook/random'));
       const data = await res.json();
       setRecipes(data.recipes || []);
     } catch (err) {

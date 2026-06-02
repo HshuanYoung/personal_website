@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, Shield, Briefcase, Cpu, CheckCircle2, AlertCircle, X, User, Building2, ExternalLink } from 'lucide-react';
 import { translations, type Language } from '../types';
+import { apiUrl, assetUrl } from '../lib/runtime';
 
 interface Experience {
   company: string;
@@ -30,7 +31,7 @@ export default function Resume({ lang }: { lang: Language }) {
   const t = translations[lang];
 
   useEffect(() => {
-    fetch('/assets/resume/resume_describe.json')
+    fetch(assetUrl('/assets/resume/resume_describe.json'))
       .then(res => res.json())
       .then(data => {
         setResumeData(data[lang]);
@@ -47,7 +48,7 @@ export default function Resume({ lang }: { lang: Language }) {
     setErrorMessage(null);
 
     try {
-      const response = await fetch('/api/download-resume', {
+      const response = await fetch(apiUrl('/api/download-resume'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
