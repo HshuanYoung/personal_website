@@ -24,6 +24,9 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      assetsDir: 'static',
+    },
     server: {
       host: frontendHost,
       port: frontendPort,

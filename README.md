@@ -50,3 +50,5 @@ This routes:
 - `hsyoung.com` to frontend `3002`
 - `/api/*` to backend `3003`
 - `/assets/*` to backend `3003`
+
+Vite production bundles are emitted under `/static/*`, so they do not conflict with backend-served `/assets/*` files.
