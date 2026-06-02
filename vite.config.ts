@@ -8,6 +8,10 @@ export default defineConfig(({mode}) => {
   const frontendHost = env.FRONTEND_HOST || '0.0.0.0';
   const frontendPort = Number.parseInt(env.FRONTEND_PORT || '3002', 10);
   const backendUrl = env.BACKEND_URL || `http://127.0.0.1:${env.BACKEND_PORT || '3003'}`;
+  const allowedHosts = (env.FRONTEND_ALLOWED_HOSTS || 'hsyoung.com,www.hsyoung.com,localhost,127.0.0.1')
+    .split(',')
+    .map(host => host.trim())
+    .filter(Boolean);
 
   return {
     publicDir: false,
@@ -24,6 +28,7 @@ export default defineConfig(({mode}) => {
       host: frontendHost,
       port: frontendPort,
       strictPort: true,
+      allowedHosts,
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
@@ -42,6 +47,7 @@ export default defineConfig(({mode}) => {
       host: frontendHost,
       port: frontendPort,
       strictPort: true,
+      allowedHosts,
     },
   };
 });

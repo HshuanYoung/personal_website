@@ -9,6 +9,7 @@ WorkingDirectory=/var/www/hsyoung.com/current
 Environment=NODE_ENV=production
 Environment=FRONTEND_HOST=0.0.0.0
 Environment=FRONTEND_PORT=3002
+Environment=FRONTEND_ALLOWED_HOSTS=hsyoung.com,www.hsyoung.com,localhost,127.0.0.1
 Environment=BACKEND_HOST=0.0.0.0
 Environment=BACKEND_PORT=3003
 Environment=FRONTEND_ORIGIN=https://hsyoung.com,http://hsyoung.com,http://127.0.0.1:3002,http://localhost:3002
