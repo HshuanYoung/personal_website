@@ -144,14 +144,6 @@ export default function App() {
         className="fixed top-0 left-0 h-full w-72 bg-white/90 backdrop-blur-xl border-r border-black/5 z-40 p-8 flex flex-col gap-8 shadow-2xl"
       >
         <div className="mt-12 flex items-center gap-4">
-          <img 
-            src={assetUrl('/assets/logo.png')} 
-            alt="Logo" 
-            className="w-10 h-10 rounded-xl object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://picsum.photos/seed/logo/100/100";
-            }}
-          />
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">hsyoung.com</h1>
             <p className="text-xs text-neutral-500 font-mono mt-1 uppercase tracking-widest">Personal Space</p>

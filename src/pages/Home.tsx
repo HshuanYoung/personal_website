@@ -24,7 +24,7 @@ export default function Home({ lang }: { lang: Language }) {
       .catch(err => console.error('Failed to fetch merit stats:', err));
     
     // Preload "muyu" sound
-    audioRef.current = new Audio(assetUrl('/assets/mp3/muyu.mp3'));
+    audioRef.current = new Audio(assetUrl('/assets/mp3/muyu.wav'));
     audioRef.current.load();
   }, []);
 
