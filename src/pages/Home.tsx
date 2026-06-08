@@ -10,6 +10,7 @@ export default function Home({ lang }: { lang: Language }) {
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const t = translations[lang];
+  const icpNumber = import.meta.env.VITE_ICP_NUMBER?.trim();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isHitting, setIsHitting] = useState(false);
@@ -243,6 +244,17 @@ export default function Home({ lang }: { lang: Language }) {
           </motion.div>
         )}
       </div>
+
+      {icpNumber && (
+        <a
+          href="https://beian.miit.gov.cn/"
+          target="_blank"
+          rel="noreferrer"
+          className="fixed bottom-4 left-1/2 z-20 -translate-x-1/2 text-xs text-neutral-400 transition-colors hover:text-neutral-700"
+        >
+          {icpNumber}
+        </a>
+      )}
     </motion.div>
   );
 }
