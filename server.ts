@@ -261,9 +261,16 @@ async function startServer() {
     const ip = req.ip || 'unknown';
     const monthYear = new Date().toISOString().substring(0, 7); // YYYY-MM
     const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const filePath = path.join(__dirname, 'assets', 'resume', 'resume_yangming.pdf');
 
     if (!name || !position || !company) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(503).json({ error: 'Resume PDF is currently unavailable' });
     }
 
     const db = await getDbPool();
@@ -342,9 +349,6 @@ async function startServer() {
           console.error('Failed to send email notification:', err);
         }
       }
-
-      // Serve the file
-      const filePath = path.join(__dirname, 'assets', 'resume', 'resume_yangming.pdf');
       res.download(filePath, `resume_yangming.pdf`, (err) => {
         if (err) {
           console.error('Failed to serve resume file:', err);

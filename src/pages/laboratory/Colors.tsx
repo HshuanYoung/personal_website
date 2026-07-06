@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { HexColorPicker } from 'react-colorful';
-import { type Language } from '../../types';
+import { translations, type Language } from '../../types';
 
 // Conversion functions
 function hexToRgb(hex: string) {
@@ -148,6 +148,7 @@ function cmykToRgb(c: number, m: number, y: number, k: number) {
 }
 
 export default function Colors({ lang }: { lang: Language }) {
+  const t = translations[lang].tools.colors;
   const [rgb, setRgb] = useState({ r: 46, g: 105, b: 232 }); // #2e69e8
   const [hex24String, setHex24String] = useState(rgbToHex(rgb.r, rgb.g, rgb.b).replace('#', '').toLowerCase());
   const [hex16String, setHex16String] = useState(rgbToRgb565(rgb.r, rgb.g, rgb.b).toString(16).padStart(4, '0').toLowerCase());
@@ -238,6 +239,7 @@ export default function Colors({ lang }: { lang: Language }) {
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-lg">#</span>
                 <input 
+                  aria-label="HEX 24bit"
                   value={hex24String} 
                   onChange={e => handleHexChange(e.target.value)}
                   className="bg-white text-black pl-8 pr-4 py-3 rounded-lg text-lg font-mono w-full outline-none focus:ring-2 focus:ring-blue-500"
@@ -249,6 +251,7 @@ export default function Colors({ lang }: { lang: Language }) {
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-lg">0x</span>
                 <input 
+                  aria-label="HEX 16bit"
                   value={hex16String} 
                   onChange={e => handleHex16Change(e.target.value)}
                   className="bg-white text-black pl-10 pr-4 py-3 rounded-lg text-lg font-mono w-full outline-none focus:ring-2 focus:ring-blue-500"
@@ -290,16 +293,19 @@ export default function Colors({ lang }: { lang: Language }) {
               <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">RGB 24bit</label>
               <div className="flex gap-2">
                 <input 
+                  aria-label="RGB red"
                   value={rgb.r} 
                   onChange={e => handleRgbChange(parseInt(e.target.value)||0, rgb.g, rgb.b)}
                   className="bg-white text-black px-2 py-3 rounded-lg text-lg font-mono w-full text-center outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input 
+                  aria-label="RGB green"
                   value={rgb.g} 
                   onChange={e => handleRgbChange(rgb.r, parseInt(e.target.value)||0, rgb.b)}
                   className="bg-white text-black px-2 py-3 rounded-lg text-lg font-mono w-full text-center outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input 
+                  aria-label="RGB blue"
                   value={rgb.b} 
                   onChange={e => handleRgbChange(rgb.r, rgb.g, parseInt(e.target.value)||0)}
                   className="bg-white text-black px-2 py-3 rounded-lg text-lg font-mono w-full text-center outline-none focus:ring-2 focus:ring-blue-500"
@@ -309,6 +315,7 @@ export default function Colors({ lang }: { lang: Language }) {
             <div className="flex flex-col gap-2">
               <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">RGB 16bit</label>
               <input 
+                aria-label="RGB 16bit"
                 value={rgb565} 
                 onChange={e => handleRgb565Change(parseInt(e.target.value) || 0)}
                 className="bg-white text-black px-4 py-3 rounded-lg text-lg font-mono w-full outline-none focus:ring-2 focus:ring-blue-500"
@@ -325,11 +332,11 @@ export default function Colors({ lang }: { lang: Language }) {
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">HSL</label>
             <div className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
-              <input value={hsl.h} onChange={e => handleHslChange(parseInt(e.target.value)||0, hsl.s, hsl.l)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="HSL hue" value={hsl.h} onChange={e => handleHslChange(parseInt(e.target.value)||0, hsl.s, hsl.l)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsl.s} onChange={e => handleHslChange(hsl.h, parseInt(e.target.value)||0, hsl.l)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="HSL saturation" value={hsl.s} onChange={e => handleHslChange(hsl.h, parseInt(e.target.value)||0, hsl.l)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsl.l} onChange={e => handleHslChange(hsl.h, hsl.s, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="HSL lightness" value={hsl.l} onChange={e => handleHslChange(hsl.h, hsl.s, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
@@ -337,11 +344,11 @@ export default function Colors({ lang }: { lang: Language }) {
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">HSV</label>
             <div className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
-              <input value={hsv.h} onChange={e => handleHsvChange(parseInt(e.target.value)||0, hsv.s, hsv.v)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="HSV hue" value={hsv.h} onChange={e => handleHsvChange(parseInt(e.target.value)||0, hsv.s, hsv.v)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsv.s} onChange={e => handleHsvChange(hsv.h, parseInt(e.target.value)||0, hsv.v)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="HSV saturation" value={hsv.s} onChange={e => handleHsvChange(hsv.h, parseInt(e.target.value)||0, hsv.v)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={hsv.v} onChange={e => handleHsvChange(hsv.h, hsv.s, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="HSV value" value={hsv.v} onChange={e => handleHsvChange(hsv.h, hsv.s, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-12 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
@@ -349,13 +356,13 @@ export default function Colors({ lang }: { lang: Language }) {
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-400 font-semibold tracking-wider uppercase">CMYK</label>
             <div className="flex items-center gap-1 sm:gap-2 text-white font-bold text-base sm:text-lg">
-              <input value={cmyk.c} onChange={e => handleCmykChange(parseInt(e.target.value)||0, cmyk.m, cmyk.y, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="CMYK cyan" value={cmyk.c} onChange={e => handleCmykChange(parseInt(e.target.value)||0, cmyk.m, cmyk.y, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={cmyk.m} onChange={e => handleCmykChange(cmyk.c, parseInt(e.target.value)||0, cmyk.y, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="CMYK magenta" value={cmyk.m} onChange={e => handleCmykChange(cmyk.c, parseInt(e.target.value)||0, cmyk.y, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={cmyk.y} onChange={e => handleCmykChange(cmyk.c, cmyk.m, parseInt(e.target.value)||0, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="CMYK yellow" value={cmyk.y} onChange={e => handleCmykChange(cmyk.c, cmyk.m, parseInt(e.target.value)||0, cmyk.k)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
               <span>,</span>
-              <input value={cmyk.k} onChange={e => handleCmykChange(cmyk.c, cmyk.m, cmyk.y, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
+              <input aria-label="CMYK black" value={cmyk.k} onChange={e => handleCmykChange(cmyk.c, cmyk.m, cmyk.y, parseInt(e.target.value)||0)} className="bg-white text-black px-1 sm:px-2 py-2 rounded-lg w-10 sm:w-14 text-center font-mono outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
@@ -367,7 +374,7 @@ export default function Colors({ lang }: { lang: Language }) {
             onClick={setRandomColor}
             className="bg-[#1e88e5] hover:bg-[#1976d2] text-white px-8 py-3 rounded-xl font-medium transition-colors"
           >
-            Random color
+            {t.random}
           </button>
         </div>
 

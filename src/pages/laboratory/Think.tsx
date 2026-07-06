@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { type Language } from '../../types';
+import { translations, type Language } from '../../types';
 import { X, FileText, FileType2, Mail } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -18,6 +18,7 @@ type Essay = {
 };
 
 export default function ThinkTool({ lang }: { lang: Language }) {
+  const t = translations[lang].tools.think;
   const [articles, setArticles] = useState<Essay[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Essay | null>(null);
   const [viewFormat, setViewFormat] = useState<'pdf' | 'txt'>('pdf');
@@ -47,13 +48,13 @@ export default function ThinkTool({ lang }: { lang: Language }) {
 
   useEffect(() => {
     if (selectedArticle && viewFormat === 'txt' && selectedArticle.txt) {
-      setTextContent('Loading text...');
+      setTextContent(t.loadingText);
       fetch(assetUrl(selectedArticle.txt))
         .then(res => res.text())
         .then(text => setTextContent(text))
-        .catch(() => setTextContent('Failed to load text content.'));
+        .catch(() => setTextContent(t.failedText));
     }
-  }, [selectedArticle, viewFormat]);
+  }, [selectedArticle, viewFormat, t.failedText, t.loadingText]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-8">
@@ -89,14 +90,14 @@ export default function ThinkTool({ lang }: { lang: Language }) {
         ))}
         {articles.length === 0 && (
           <div className="p-8 text-center text-neutral-500 bg-white rounded-2xl border border-black/5">
-            No essays found.
+            {t.noEssays}
           </div>
         )}
       </div>
 
       <div className="mt-8 p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-center text-center">
         <p className="text-emerald-800 font-medium flex items-center justify-center flex-wrap gap-2 text-lg">
-          Do you want to say something? Click <Mail size={20} className="text-emerald-600" /> to learn more!
+          {t.contactCta} <Mail size={20} className="text-emerald-600" />
         </p>
       </div>
 
@@ -142,6 +143,7 @@ export default function ThinkTool({ lang }: { lang: Language }) {
                 <button
                   onClick={() => setSelectedArticle(null)}
                   className="p-2 rounded-full hover:bg-neutral-200 transition-colors"
+                  aria-label={translations[lang].close}
                 >
                   <X size={24} />
                 </button>
@@ -155,12 +157,12 @@ export default function ThinkTool({ lang }: { lang: Language }) {
                       className="flex flex-col gap-6"
                       loading={
                         <div className="flex items-center justify-center p-12 text-neutral-500 font-medium">
-                          Loading secure document...
+                          {t.loadingDocument}
                         </div>
                       }
                       error={
                         <div className="flex items-center justify-center p-12 text-red-500 font-medium">
-                          Failed to load document.
+                          {t.failedDocument}
                         </div>
                       }
                     >

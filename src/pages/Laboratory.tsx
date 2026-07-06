@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Palette, Lightbulb, Search, ChefHat, Copy, Check } from 'lucide-react';
+import { lazy, Suspense } from 'react';
+import { motion } from 'motion/react';
+import { Palette, Lightbulb, Search, ChefHat } from 'lucide-react';
 import { translations, type Language } from '../types';
 import { cn } from '../lib/utils';
-import Colors from './laboratory/Colors';
-import ThinkTool from './laboratory/Think';
-import SearchTool from './laboratory/Search';
-import CookTool from './laboratory/Cook';
+
+const Colors = lazy(() => import('./laboratory/Colors'));
+const ThinkTool = lazy(() => import('./laboratory/Think'));
+const SearchTool = lazy(() => import('./laboratory/Search'));
+const CookTool = lazy(() => import('./laboratory/Cook'));
 
 type SubPage = 'colors' | 'think' | 'search' | 'cook' | null;
 
@@ -18,7 +19,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
       {
         id: 'colors' as const,
         title: t.colors,
-        description: 'choose color, convert color',
+        description: t.laboratoryCards.colors,
         icon: <Palette size={32} />,
         color: 'text-pink-500',
         bg: 'bg-pink-500/10',
@@ -27,7 +28,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
       {
         id: 'think' as const,
         title: t.think,
-        description: 'some useless easy',
+        description: t.laboratoryCards.think,
         icon: <Lightbulb size={32} />,
         color: 'text-amber-500',
         bg: 'bg-amber-500/10',
@@ -36,7 +37,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
       {
         id: 'search' as const,
         title: t.search,
-        description: 'query drug information',
+        description: t.laboratoryCards.search,
         icon: <Search size={32} />,
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
@@ -45,7 +46,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
       {
         id: 'cook' as const,
         title: t.cook,
-        description: 'cook in my way',
+        description: t.laboratoryCards.cook,
         icon: <ChefHat size={32} />,
         color: 'text-emerald-500',
         bg: 'bg-emerald-500/10',
@@ -62,7 +63,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
       >
         <div className="text-center flex flex-col gap-4">
           <h2 className="text-5xl font-black tracking-tighter text-neutral-900">{t.laboratory}</h2>
-          <p className="text-xl text-neutral-500 font-medium">Select an experiment to begin.</p>
+          <p className="text-xl text-neutral-500 font-medium">{t.laboratoryIntro}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
@@ -73,6 +74,7 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.1 }}
               onClick={() => setSubPage(card.id)}
+              aria-label={`${card.title}: ${card.description}`}
               className={cn(
                 "group flex flex-col items-start text-left p-8 rounded-[2rem] bg-white border-2 border-transparent shadow-lg hover:shadow-2xl transition-all duration-300",
                 card.hoverBorder
@@ -92,10 +94,20 @@ export default function Laboratory({ lang, subPage, setSubPage }: { lang: Langua
 
   return (
     <div className="max-w-4xl mx-auto">
-      {subPage === 'colors' && <Colors lang={lang} />}
-      {subPage === 'think' && <ThinkTool lang={lang} />}
-      {subPage === 'search' && <SearchTool lang={lang} />}
-      {subPage === 'cook' && <CookTool lang={lang} />}
+      <Suspense fallback={<ToolFallback label={t.loadingPage} />}>
+        {subPage === 'colors' && <Colors lang={lang} />}
+        {subPage === 'think' && <ThinkTool lang={lang} />}
+        {subPage === 'search' && <SearchTool lang={lang} />}
+        {subPage === 'cook' && <CookTool lang={lang} />}
+      </Suspense>
+    </div>
+  );
+}
+
+function ToolFallback({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center rounded-3xl bg-white text-sm font-medium text-neutral-500">
+      {label}
     </div>
   );
 }

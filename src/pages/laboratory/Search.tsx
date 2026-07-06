@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { type Language } from '../../types';
+import { translations, type Language } from '../../types';
 import { Search, X, Pill } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { apiUrl } from '../../lib/runtime';
@@ -11,6 +11,7 @@ type DrugResult = {
 };
 
 export default function SearchTool({ lang }: { lang: Language }) {
+  const t = translations[lang].tools.search;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<DrugResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,14 +30,14 @@ export default function SearchTool({ lang }: { lang: Language }) {
       const res = await fetch(apiUrl(`/api/drug/search?q=${encodeURIComponent(query)}`));
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Search failed');
+        setError(data.error || t.failed);
         setResults([]);
       } else {
         setResults(data.results || []);
       }
     } catch (err) {
       console.error('Search failed:', err);
-      setError('Search failed');
+      setError(t.failed);
       setResults([]);
     } finally {
       setLoading(false);
@@ -49,11 +50,11 @@ export default function SearchTool({ lang }: { lang: Language }) {
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/5 shadow-sm flex flex-col gap-6">
         <div className="flex items-center gap-3 text-blue-800">
           <Pill size={28} />
-          <h2 className="text-2xl font-bold">Drug Information Search</h2>
+          <h2 className="text-2xl font-bold">{t.title}</h2>
         </div>
         
         <p className="text-neutral-500 text-sm">
-          Note: Each IP can only make 3 incorrect inputs per day.
+          {t.note}
         </p>
 
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
@@ -63,7 +64,7 @@ export default function SearchTool({ lang }: { lang: Language }) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for a drug name..."
+              placeholder={t.placeholder}
               className="w-full pl-12 pr-4 py-4 bg-neutral-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-2xl transition-all outline-none text-lg"
             />
           </div>
@@ -73,7 +74,7 @@ export default function SearchTool({ lang }: { lang: Language }) {
               disabled={loading || !query.trim()}
               className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 text-white font-bold rounded-2xl transition-colors whitespace-nowrap"
             >
-              Search
+              {t.submit}
             </button>
           </div>
         </form>
@@ -85,7 +86,7 @@ export default function SearchTool({ lang }: { lang: Language }) {
           {loading ? (
             <div className="p-12 text-center text-blue-600 bg-white rounded-3xl border border-black/5 shadow-sm flex flex-col items-center gap-4">
               <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="font-medium animate-pulse">Searching drug info... (AI might take a moment)</p>
+              <p className="font-medium animate-pulse">{t.loading}</p>
             </div>
           ) : error ? (
             <div className="p-12 text-center text-red-500 bg-red-50 rounded-3xl border border-red-100 shadow-sm">
@@ -107,13 +108,13 @@ export default function SearchTool({ lang }: { lang: Language }) {
                   </h3>
                 </div>
                 <span className="text-blue-600 font-medium group-hover:text-blue-200 transition-colors">
-                  View Info &rarr;
+                  {t.viewInfo} &rarr;
                 </span>
               </button>
             ))
           ) : (
             <div className="p-12 text-center text-neutral-500 bg-white rounded-3xl border border-black/5 shadow-sm">
-              No results found. Try another search!
+              {t.noResults}
             </div>
           )}
         </div>
@@ -142,6 +143,7 @@ export default function SearchTool({ lang }: { lang: Language }) {
                 <button
                   onClick={() => setSelectedResult(null)}
                   className="p-2 rounded-full hover:bg-blue-200 text-blue-800 transition-colors"
+                  aria-label={translations[lang].close}
                 >
                   <X size={24} />
                 </button>

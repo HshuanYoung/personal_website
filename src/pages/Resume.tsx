@@ -28,19 +28,45 @@ export default function Resume({ lang }: { lang: Language }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+  const [resumeStatus, setResumeStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const t = translations[lang];
 
   useEffect(() => {
+    let cancelled = false;
+
+    setResumeStatus('loading');
     fetch(assetUrl('/assets/resume/resume_describe.json'))
-      .then(res => res.json())
-      .then(data => {
-        setResumeData(data[lang]);
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Resume data returned ${res.status}`);
+        }
+        return res.json();
       })
-      .catch(err => console.error('Failed to load resume data:', err));
+      .then(data => {
+        if (cancelled) return;
+        const localizedData = data[lang];
+        if (!localizedData) {
+          throw new Error(`Resume data is missing language: ${lang}`);
+        }
+        setResumeData(localizedData);
+        setResumeStatus('ready');
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.warn('Failed to load resume data:', err);
+        setResumeData(null);
+        setResumeStatus('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [lang]);
 
   const experiences = resumeData?.experiences || [];
   const projects = resumeData?.projects || [];
+  const previewItems = (items: string[]) => items.slice(0, 1);
+  const hasHiddenDetails = (items: string[]) => items.length > 1;
 
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +82,7 @@ export default function Resume({ lang }: { lang: Language }) {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Download failed');
+        throw new Error(data.error || t.downloadFailed);
       }
 
       const blob = await response.blob();
@@ -76,7 +102,7 @@ export default function Resume({ lang }: { lang: Language }) {
       }, 2000);
     } catch (err: any) {
       setStatus('error');
-      setErrorMessage(err.message);
+      setErrorMessage(err?.message || t.downloadFailed);
     }
   };
 
@@ -93,26 +119,22 @@ export default function Resume({ lang }: { lang: Language }) {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3 text-emerald-600">
               <Shield size={20} />
-              <span className="text-xs font-bold uppercase tracking-[0.2em]">{lang === 'zh' ? '隐私保护预览' : 'Privacy Protected Preview'}</span>
+              <span className="text-xs font-bold uppercase tracking-[0.2em]">{t.privacyPreview}</span>
             </div>
             <div className="flex flex-col gap-2">
               <h1 className="text-6xl font-black tracking-tighter text-neutral-900">
-                {lang === 'zh' ? '杨铭' : 'Yang Ming'}
+                {t.resumeName}
               </h1>
               <p className="text-xl font-medium text-neutral-500">
-                {lang === 'zh' ? '嵌入式开发工程师' : 'Embedded Systems Developer'}
+                {t.resumeRole}
               </p>
             </div>
             <div className="flex flex-wrap gap-3 mt-2">
-              <span className="px-3 py-1 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-neutral-500 border border-black/5">
-                {lang === 'zh' ? '5年经验' : '5 Years Exp'}
-              </span>
-              <span className="px-3 py-1 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-neutral-500 border border-black/5">
-                {lang === 'zh' ? 'Linux 专家' : 'Linux Expert'}
-              </span>
-              <span className="px-3 py-1 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-neutral-500 border border-black/5">
-                {lang === 'zh' ? '全栈嵌入式' : 'Full-stack Embedded'}
-              </span>
+              {t.resumeStats.map(stat => (
+                <span key={stat} className="px-3 py-1 bg-neutral-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-neutral-500 border border-black/5">
+                  {stat}
+                </span>
+              ))}
             </div>
           </div>
           
@@ -121,12 +143,10 @@ export default function Resume({ lang }: { lang: Language }) {
             <div className="p-4 bg-emerald-500 text-white rounded-2xl flex flex-col gap-2 shadow-lg shadow-emerald-500/20">
               <div className="flex items-center gap-2">
                 <Shield size={16} />
-                <span className="text-[10px] font-bold uppercase tracking-widest">{lang === 'zh' ? '隐私声明' : 'Privacy Note'}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">{t.privacyNoteTitle}</span>
               </div>
               <p className="text-xs leading-relaxed font-medium">
-                {lang === 'zh' 
-                  ? '教育背景和基本联系信息已在预览中隐藏。如需查看完整简历，请点击下方按钮下载 PDF 版本。' 
-                  : 'Educational background and basic contact information are hidden in this preview. To view the full resume, please download the PDF version.'}
+                {t.privacyNote}
               </p>
             </div>
 
@@ -135,7 +155,7 @@ export default function Resume({ lang }: { lang: Language }) {
               className="group relative bg-neutral-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-red-600 transition-all duration-300 flex items-center justify-center gap-3 shadow-xl hover:shadow-red-500/20"
             >
               <Download size={20} className="group-hover:animate-bounce" />
-              <span>{lang === 'zh' ? '下载完整 PDF' : 'Download Full PDF'}</span>
+              <span>{t.downloadFull}</span>
             </button>
           </div>
         </div>
@@ -148,8 +168,10 @@ export default function Resume({ lang }: { lang: Language }) {
             <div className="p-3 bg-neutral-900 text-white rounded-2xl">
               <Briefcase size={24} />
             </div>
-            <h2 className="text-3xl font-black tracking-tight">{lang === 'zh' ? '工作经历' : 'Work Experience'}</h2>
+            <h2 className="text-3xl font-black tracking-tight">{t.workExperience}</h2>
           </div>
+
+          {resumeStatus === 'error' && <ResumeDataFallback title={t.resumePreviewUnavailableTitle} body={t.resumePreviewUnavailableBody} />}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {experiences.map((exp, idx) => (
@@ -172,12 +194,18 @@ export default function Resume({ lang }: { lang: Language }) {
                   </div>
                   <div className="bg-neutral-50/80 p-5 rounded-2xl border border-black/[0.03]">
                     <ul className="flex flex-col gap-3">
-                      {exp.description.map((item, i) => (
+                      {previewItems(exp.description).map((item, i) => (
                         <li key={i} className="text-neutral-600 text-sm leading-relaxed flex gap-3">
                           <span className="text-emerald-400 mt-1.5">•</span>
                           <span>{item}</span>
                         </li>
                       ))}
+                      {hasHiddenDetails(exp.description) && (
+                        <li className="text-neutral-400 text-sm leading-relaxed flex gap-3">
+                          <Shield size={14} className="mt-1 flex-shrink-0 text-emerald-400" />
+                          <span>{t.previewHiddenDetails}</span>
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -192,10 +220,12 @@ export default function Resume({ lang }: { lang: Language }) {
             <div className="p-3 bg-neutral-900 text-white rounded-2xl">
               <Cpu size={24} />
             </div>
-            <h2 className="text-3xl font-black tracking-tight">{lang === 'zh' ? '主要项目' : 'Main Projects'}</h2>
+            <h2 className="text-3xl font-black tracking-tight">{t.mainProjects}</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {resumeStatus === 'error' && <ResumeDataFallback title={t.resumePreviewUnavailableTitle} body={t.resumePreviewUnavailableBody} />}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {projects.map((project, idx) => (
               <motion.div 
                 key={idx}
@@ -218,11 +248,16 @@ export default function Resume({ lang }: { lang: Language }) {
                   </div>
                   <div className="bg-emerald-50/30 p-4 rounded-2xl border border-emerald-500/5 mt-auto text-center">
                     <ul className="flex flex-col gap-2">
-                      {project.description.map((item, i) => (
+                      {previewItems(project.description).map((item, i) => (
                         <li key={i} className="text-neutral-500 text-xs leading-relaxed">
                           {item}
                         </li>
                       ))}
+                      {hasHiddenDetails(project.description) && (
+                        <li className="text-emerald-700/70 text-xs leading-relaxed font-medium">
+                          {t.previewHiddenDetails}
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -254,15 +289,16 @@ export default function Resume({ lang }: { lang: Language }) {
                 <button 
                   onClick={() => setIsModalOpen(false)}
                   className="absolute top-6 right-6 p-2 hover:bg-neutral-100 rounded-full transition-colors"
+                  aria-label={t.close}
                 >
                   <X size={20} />
                 </button>
 
                 <div className="flex flex-col gap-8">
-                  <div className="flex flex-col gap-2">
-                    <h3 className="text-3xl font-black tracking-tight">{lang === 'zh' ? '下载简历' : 'Download Resume'}</h3>
+                  <div className="flex flex-col gap-2 pr-10">
+                    <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{t.downloadResumeTitle}</h3>
                     <p className="text-neutral-500 text-sm">
-                      {lang === 'zh' ? '请填写您的信息以继续下载。' : 'Please fill in your details to proceed with the download.'}
+                      {t.downloadResumeHelp}
                     </p>
                   </div>
 
@@ -270,7 +306,7 @@ export default function Resume({ lang }: { lang: Language }) {
                     <div className="flex flex-col gap-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-2">
                         <User size={12} />
-                        {lang === 'zh' ? '您的姓名' : 'Your Name'}
+                        {t.downloadForm.nameLabel}
                       </label>
                       <input
                         required
@@ -278,14 +314,14 @@ export default function Resume({ lang }: { lang: Language }) {
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                         className="w-full p-4 rounded-2xl bg-neutral-50 border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none"
-                        placeholder={lang === 'zh' ? '例如：张三' : 'e.g. Jane Smith'}
+                        placeholder={t.downloadForm.namePlaceholder}
                       />
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-2">
                         <Briefcase size={12} />
-                        {lang === 'zh' ? '您的职位' : 'Your Position'}
+                        {t.downloadForm.positionLabel}
                       </label>
                       <input
                         required
@@ -293,14 +329,14 @@ export default function Resume({ lang }: { lang: Language }) {
                         value={formData.position}
                         onChange={e => setFormData({ ...formData, position: e.target.value })}
                         className="w-full p-4 rounded-2xl bg-neutral-50 border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none"
-                        placeholder={lang === 'zh' ? '例如：HR 经理' : 'e.g. HR Manager'}
+                        placeholder={t.downloadForm.positionPlaceholder}
                       />
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-2">
                         <Building2 size={12} />
-                        {lang === 'zh' ? '公司名称' : 'Company'}
+                        {t.downloadForm.companyLabel}
                       </label>
                       <input
                         required
@@ -308,19 +344,17 @@ export default function Resume({ lang }: { lang: Language }) {
                         value={formData.company}
                         onChange={e => setFormData({ ...formData, company: e.target.value })}
                         className="w-full p-4 rounded-2xl bg-neutral-50 border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none"
-                        placeholder={lang === 'zh' ? '例如：谷歌' : 'e.g. Google'}
+                        placeholder={t.downloadForm.companyPlaceholder}
                       />
                     </div>
 
                     <div className="bg-emerald-50 p-4 rounded-2xl flex flex-col gap-2 border border-emerald-100 mt-2">
                       <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
                         <AlertCircle size={14} />
-                        {lang === 'zh' ? '下载限制' : 'Download Limits'}
+                        {t.downloadLimitTitle}
                       </div>
                       <p className="text-[11px] text-emerald-600 leading-relaxed">
-                        {lang === 'zh' 
-                          ? '每个 IP 每月最多下载 2 次。全站每月限制 200 次。' 
-                          : 'Each IP can download a maximum of 2 times per month. Total site limit: 200 downloads/month.'}
+                        {t.downloadLimitBody}
                       </p>
                     </div>
 
@@ -334,7 +368,7 @@ export default function Resume({ lang }: { lang: Language }) {
                       ) : (
                         <>
                           <Download size={20} />
-                          <span>{lang === 'zh' ? '请求下载' : 'Request Download'}</span>
+                          <span>{t.requestDownload}</span>
                         </>
                       )}
                     </button>
@@ -347,7 +381,7 @@ export default function Resume({ lang }: { lang: Language }) {
                           className="flex items-center gap-2 text-emerald-600 justify-center text-sm font-bold"
                         >
                           <CheckCircle2 size={16} />
-                          <span>{lang === 'zh' ? '下载已开始！' : 'Download Started!'}</span>
+                          <span>{t.downloadStarted}</span>
                         </motion.div>
                       )}
                       {status === 'error' && (
@@ -369,5 +403,19 @@ export default function Resume({ lang }: { lang: Language }) {
         )}
       </AnimatePresence>
     </motion.div>
+  );
+}
+
+function ResumeDataFallback({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-neutral-300 bg-white/70 p-6 text-neutral-600">
+      <div className="flex items-start gap-3">
+        <AlertCircle size={20} className="mt-0.5 flex-shrink-0 text-amber-500" />
+        <div className="flex flex-col gap-1">
+          <p className="font-bold text-neutral-900">{title}</p>
+          <p className="text-sm leading-relaxed">{body}</p>
+        </div>
+      </div>
+    </div>
   );
 }

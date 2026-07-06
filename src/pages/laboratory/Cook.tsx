@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { type Language } from '../../types';
+import { translations, type Language } from '../../types';
 import { Search, Sparkles, X, ChefHat } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { apiUrl } from '../../lib/runtime';
@@ -11,6 +11,7 @@ type Recipe = {
 };
 
 export default function CookTool({ lang }: { lang: Language }) {
+  const t = translations[lang].tools.cook;
   const [query, setQuery] = useState('');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,14 +30,14 @@ export default function CookTool({ lang }: { lang: Language }) {
       const res = await fetch(apiUrl(`/api/cook/search?q=${encodeURIComponent(query)}`));
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Search failed');
+        setError(data.error || t.failed);
         setRecipes([]);
       } else {
         setRecipes(data.recipes || []);
       }
     } catch (err) {
       console.error('Search failed:', err);
-      setError('Search failed');
+      setError(t.failed);
       setRecipes([]);
     } finally {
       setLoading(false);
@@ -53,7 +54,7 @@ export default function CookTool({ lang }: { lang: Language }) {
       setRecipes(data.recipes || []);
     } catch (err) {
       console.error('Random idea failed:', err);
-      setError('Failed to fetch random recipe');
+      setError(t.failedRandom);
       setRecipes([]);
     } finally {
       setLoading(false);
@@ -66,7 +67,7 @@ export default function CookTool({ lang }: { lang: Language }) {
       <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/5 shadow-sm flex flex-col gap-6">
         <div className="flex items-center gap-3 text-emerald-800">
           <ChefHat size={28} />
-          <h2 className="text-2xl font-bold">Cookbook</h2>
+          <h2 className="text-2xl font-bold">{t.title}</h2>
         </div>
         
         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
@@ -76,7 +77,7 @@ export default function CookTool({ lang }: { lang: Language }) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for a recipe (e.g., potato)..."
+              placeholder={t.placeholder}
               className="w-full pl-12 pr-4 py-4 bg-neutral-100 border-transparent focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-2xl transition-all outline-none text-lg"
             />
           </div>
@@ -86,7 +87,7 @@ export default function CookTool({ lang }: { lang: Language }) {
               disabled={loading || !query.trim()}
               className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white font-bold rounded-2xl transition-colors whitespace-nowrap"
             >
-              Search
+              {t.submit}
             </button>
             <button
               type="button"
@@ -95,7 +96,7 @@ export default function CookTool({ lang }: { lang: Language }) {
               className="px-6 py-4 bg-emerald-100 hover:bg-emerald-200 disabled:opacity-50 text-emerald-800 font-bold rounded-2xl transition-colors whitespace-nowrap flex items-center gap-2"
             >
               <Sparkles size={20} />
-              <span>Idea</span>
+              <span>{t.idea}</span>
             </button>
           </div>
         </form>
@@ -107,7 +108,7 @@ export default function CookTool({ lang }: { lang: Language }) {
           {loading ? (
             <div className="p-12 text-center text-emerald-600 bg-white rounded-3xl border border-black/5 shadow-sm flex flex-col items-center gap-4">
               <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
-              <p className="font-medium animate-pulse">Cooking up results... (AI might take a moment)</p>
+              <p className="font-medium animate-pulse">{t.loading}</p>
             </div>
           ) : error ? (
             <div className="p-12 text-center text-red-500 bg-red-50 rounded-3xl border border-red-100 shadow-sm">
@@ -129,13 +130,13 @@ export default function CookTool({ lang }: { lang: Language }) {
                   </h3>
                 </div>
                 <span className="text-emerald-600 font-medium group-hover:text-emerald-200 transition-colors">
-                  View Recipe &rarr;
+                  {t.viewRecipe} &rarr;
                 </span>
               </button>
             ))
           ) : (
             <div className="p-12 text-center text-neutral-500 bg-white rounded-3xl border border-black/5 shadow-sm">
-              No recipes found. Try another search!
+              {t.noResults}
             </div>
           )}
         </div>
@@ -164,6 +165,7 @@ export default function CookTool({ lang }: { lang: Language }) {
                 <button
                   onClick={() => setSelectedRecipe(null)}
                   className="p-2 rounded-full hover:bg-emerald-200 text-emerald-800 transition-colors"
+                  aria-label={translations[lang].close}
                 >
                   <X size={24} />
                 </button>

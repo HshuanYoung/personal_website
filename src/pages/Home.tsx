@@ -69,17 +69,23 @@ export default function Home({ lang }: { lang: Language }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] py-8 gap-12"
+      className="flex flex-col items-center justify-center min-h-[calc(100vh-7rem)] py-2 gap-4"
     >
       <div className="text-center">
-        <h2 className="text-5xl font-bold tracking-tight mb-4">hsyoung.com</h2>
-        <p className="text-neutral-500 max-w-md mx-auto">
-          Welcome to my personal page.Try click it!
+        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">hsyoung.com</h2>
+        <p className="text-neutral-500 max-w-xl mx-auto leading-relaxed">
+          {t.homeIntro}
         </p>
       </div>
 
-      <div className="relative group cursor-pointer" onClick={handleFishClick}>
-        <div className="w-80 h-80 bg-[#121212] rounded-[4rem] flex items-center justify-center relative shadow-2xl border border-white/5 overflow-hidden">
+      <button
+        type="button"
+        className="relative group cursor-pointer border-0 bg-transparent p-0 text-left disabled:cursor-wait"
+        onClick={handleFishClick}
+        disabled={isHitting}
+        aria-label={t.woodenFishAria}
+      >
+        <div className="w-64 h-64 bg-[#121212] rounded-[3.5rem] flex items-center justify-center relative shadow-2xl border border-white/5 overflow-hidden">
           <svg viewBox="0 0 200 200" className="w-full h-full p-6">
             {/* Wooden Fish Body */}
             <motion.g
@@ -174,11 +180,11 @@ export default function Home({ lang }: { lang: Language }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </button>
 
       <div className="flex flex-col items-center gap-6">
         <div className="flex flex-col items-center gap-3">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">Daily Merit Progress</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">{t.meritProgress}</span>
           <div className="flex gap-2">
             {[...Array(10)].map((_, i) => {
               let color = "#10b981"; // green
@@ -225,7 +231,7 @@ export default function Home({ lang }: { lang: Language }) {
               `}
             </style>
             <div className="relative z-10 flex items-center gap-2 text-white font-bold whitespace-nowrap">
-              <span className="text-xs uppercase tracking-widest opacity-90">total count:</span>
+              <span className="text-xs uppercase tracking-widest opacity-90">{t.totalCount}</span>
               <AnimatePresence mode="popLayout">
                 <motion.span 
                   key={totalMerit}
@@ -238,7 +244,7 @@ export default function Home({ lang }: { lang: Language }) {
                   {totalMerit.toLocaleString()}
                 </motion.span>
               </AnimatePresence>
-              <span className="text-xs uppercase tracking-widest opacity-90">pts</span>
+              <span className="text-xs uppercase tracking-widest opacity-90">{t.points}</span>
             </div>
             <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
           </motion.div>
